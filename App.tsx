@@ -206,10 +206,20 @@ const RoomSession: React.FC = () => {
     isTranscriptionEnabled,
     setIsTranscriptionEnabled,
     isLocalAiAudioEnabled,
-    toggleLocalAiAudio
+    toggleLocalAiAudio,
+    remoteStream
   } = useGeminiLive();
 
   const { sendMessage } = useDataChannel(currentRoom);
+  const { userRole } = useAppStore();
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  useEffect(() => {
+    if (audioRef.current && remoteStream && userRole === 'listener') {
+      audioRef.current.srcObject = remoteStream;
+      audioRef.current.play().catch(e => console.error("Error playing remote stream:", e));
+    }
+  }, [remoteStream, userRole]);
 
   useEffect(() => {
     if (activeMode !== 'off') {
@@ -426,6 +436,11 @@ const RoomSession: React.FC = () => {
             toggleLocalAiAudio={toggleLocalAiAudio}
             sendMessage={sendMessage}
           />
+      )}
+      
+      {/* Hidden audio element for listeners */}
+      {userRole === 'listener' && (
+        <audio ref={audioRef} autoPlay playsInline style={{ display: 'none' }} />
       )}
     </div>
   );

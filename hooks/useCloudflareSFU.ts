@@ -4,8 +4,10 @@ export type SFUStatus = 'disconnected' | 'connecting' | 'connected';
 
 export function useCloudflareSFU(roomId: string | null, onMessage?: (msg: any) => void) {
   const [status, setStatus] = useState<SFUStatus>('disconnected');
+  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const dataChannelRef = useRef<RTCDataChannel | null>(null);
+  const sessionIdRef = useRef<string | null>(null);
 
   const connect = useCallback(async () => {
     if (!roomId) return;
@@ -29,6 +31,11 @@ export function useCloudflareSFU(roomId: string | null, onMessage?: (msg: any) =
         ]
       });
       peerConnectionRef.current = pc;
+
+      pc.ontrack = (event) => {
+        console.log("[SFU] Received remote track", event.track.kind);
+        setRemoteStream(event.streams[0]);
+      };
 
       // Create DataChannel
       const dc = pc.createDataChannel('motesbryggan-data');
@@ -87,6 +94,7 @@ export function useCloudflareSFU(roomId: string | null, onMessage?: (msg: any) =
       // Set remote description from Cloudflare's answer
       if (data && data.sessionDescription) {
         await pc.setRemoteDescription(new RTCSessionDescription(data.sessionDescription));
+        sessionIdRef.current = data.sessionId;
       } else {
         throw new Error("No sessionDescription in Cloudflare response");
       }
@@ -106,6 +114,8 @@ export function useCloudflareSFU(roomId: string | null, onMessage?: (msg: any) =
       peerConnectionRef.current.close();
       peerConnectionRef.current = null;
     }
+    sessionIdRef.current = null;
+    setRemoteStream(null);
     setStatus('disconnected');
   }, []);
 
@@ -117,5 +127,60 @@ export function useCloudflareSFU(roomId: string | null, onMessage?: (msg: any) =
     }
   }, []);
 
-  return { status, connect, disconnect, sendData };
+  const publishAudio = useCallback(async (track: MediaStreamTrack) => {
+    const pc = peerConnectionRef.current;
+    const sessionId = sessionIdRef.current;
+    const appId = import.meta.env.VITE_CLOUDFLARE_APP_ID;
+    const appSecret = import.meta.env.VITE_CLOUDFLARE_APP_SECRET;
+
+    if (!pc || !sessionId || !appId || !appSecret) {
+      console.error("[SFU] Cannot publish audio: missing connection or credentials");
+      return;
+    }
+
+    try {
+      pc.addTransceiver(track, { direction: 'sendonly' });
+
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+
+      const response = await fetch(`https://rtc.live.cloudflare.com/v1/apps/${appId}/sessions/${sessionId}/tracks/new`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${appSecret}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          sessionDescription: {
+            type: offer.type,
+            sdp: offer.sdp
+          },
+          tracks: [
+            {
+              location: "local",
+              mid: pc.getTransceivers().find(t => t.sender.track === track)?.mid,
+              trackName: track.id
+            }
+          ]
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Cloudflare API error publishing track: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      if (data && data.sessionDescription) {
+        await pc.setRemoteDescription(new RTCSessionDescription(data.sessionDescription));
+        console.log("[SFU] Successfully published audio track");
+      } else {
+        throw new Error("No sessionDescription in Cloudflare response for track publish");
+      }
+    } catch (error) {
+      console.error("[SFU] Failed to publish audio:", error);
+    }
+  }, []);
+
+  return { status, connect, disconnect, sendData, publishAudio, remoteStream };
 }

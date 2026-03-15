@@ -67,7 +67,7 @@ export function useDataChannel(roomId: string | null) {
     }
   }, []);
 
-  const { status, connect, disconnect, sendData } = useCloudflareSFU(roomId, handleMessage);
+  const { status, connect, disconnect, sendData, publishAudio, remoteStream } = useCloudflareSFU(roomId, handleMessage);
 
   const sendMessage = useCallback((msg: Omit<DataChannelMessage, 'senderId' | 'senderRole'>) => {
     const { userRole } = useAppStore.getState();
@@ -101,5 +101,5 @@ export function useDataChannel(roomId: string | null) {
     }
   }, [status, sendMessage]);
 
-  return { sendMessage };
+  return { sendMessage, publishAudio, remoteStream };
 }

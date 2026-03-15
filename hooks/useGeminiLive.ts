@@ -801,6 +801,7 @@ export function useGeminiLive() {
     toggleLocalAiAudio,
     isJitterEnabled, setIsJitterEnabled,
     jitterIntensity, setJitterIntensity, 
+    remoteStream,
     ...config 
   };
 }
