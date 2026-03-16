@@ -101,5 +101,5 @@ export function useDataChannel(roomId: string | null) {
     }
   }, [status, sendMessage]);
 
-  return { sendMessage, publishAudio, remoteStream };
+  return { sendMessage, remoteStream, publishAudio, connectSfu: connect, sfuStatus: status };
 }

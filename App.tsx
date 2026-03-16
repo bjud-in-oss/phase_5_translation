@@ -207,17 +207,35 @@ const RoomSession: React.FC = () => {
     setIsTranscriptionEnabled,
     isLocalAiAudioEnabled,
     toggleLocalAiAudio,
-    remoteStream
+    getRadiomixStream
   } = useGeminiLive();
 
-  const { sendMessage } = useDataChannel(currentRoom);
+  const { sendMessage, remoteStream, publishAudio, connectSfu, sfuStatus } = useDataChannel(currentRoom);
   const { userRole } = useAppStore();
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const remoteAudioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
-    if (audioRef.current && remoteStream && userRole === 'listener') {
-      audioRef.current.srcObject = remoteStream;
-      audioRef.current.play().catch(e => console.error("Error playing remote stream:", e));
+    if (currentRoom) {
+      connectSfu();
+    }
+  }, [currentRoom, connectSfu]);
+
+  useEffect(() => {
+    if (sfuStatus === 'connected' && userRole === 'admin') {
+      const stream = getRadiomixStream();
+      if (stream) {
+        const audioTrack = stream.getAudioTracks()[0];
+        if (audioTrack) {
+          publishAudio(audioTrack);
+        }
+      }
+    }
+  }, [sfuStatus, userRole, getRadiomixStream, publishAudio]);
+
+  useEffect(() => {
+    if (remoteAudioRef.current && remoteStream && userRole === 'listener') {
+      remoteAudioRef.current.srcObject = remoteStream;
+      remoteAudioRef.current.play().catch(e => console.error("Error playing remote stream:", e));
     }
   }, [remoteStream, userRole]);
 
@@ -440,7 +458,7 @@ const RoomSession: React.FC = () => {
       
       {/* Hidden audio element for listeners */}
       {userRole === 'listener' && (
-        <audio ref={audioRef} autoPlay playsInline style={{ display: 'none' }} />
+        <audio ref={remoteAudioRef} autoPlay playsInline style={{ display: 'none' }} />
       )}
     </div>
   );
