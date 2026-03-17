@@ -61,8 +61,8 @@ export function useCloudflareSFU(roomId: string | null) {
       const localDescription = pc.localDescription;
       if (!localDescription) throw new Error("No local description");
 
-      const mid = transceiver.mid;
-      if (!mid) throw new Error("Transceiver mid is missing");
+      console.log("[SFU] Waiting 1.5s for Cloudflare edge propagation...");
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
       const response = await fetch(`https://rtc.live.cloudflare.com/v1/apps/${appId}/sessions/${sessionId}/tracks/new`, {
         method: 'POST',
@@ -79,8 +79,7 @@ export function useCloudflareSFU(roomId: string | null) {
             {
               location: "remote",
               sessionId: remoteSessionId,
-              trackName: trackName,
-              mid: mid
+              trackName: trackName
             }
           ]
         })
