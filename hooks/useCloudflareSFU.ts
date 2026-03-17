@@ -2,29 +2,67 @@ import { useState, useCallback, useRef } from 'react';
 
 export type SFUStatus = 'disconnected' | 'connecting' | 'connected';
 
+const waitForIceGathering = (pc: RTCPeerConnection) => {
+  return new Promise<void>((resolve) => {
+    if (pc.iceGatheringState === 'complete') {
+      resolve();
+    } else {
+      const checkState = () => {
+        if (pc.iceGatheringState === 'complete') {
+          pc.removeEventListener('icegatheringstatechange', checkState);
+          resolve();
+        }
+      };
+      pc.addEventListener('icegatheringstatechange', checkState);
+      setTimeout(() => {
+        pc.removeEventListener('icegatheringstatechange', checkState);
+        resolve();
+      }, 3000); // 3 second timeout
+    }
+  });
+};
+
 export function useCloudflareSFU(roomId: string | null) {
   const [status, setStatus] = useState<SFUStatus>('disconnected');
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const sessionIdRef = useRef<string | null>(null);
   const publishedTrackRef = useRef<{ sessionId: string, trackName: string } | null>(null);
+  const pendingSubRef = useRef<{remoteSessionId: string, trackName: string} | null>(null);
 
   const subscribeToTrack = useCallback(async (remoteSessionId: string, trackName: string) => {
     const pc = peerConnectionRef.current;
     const sessionId = sessionIdRef.current;
+
+    if (!pc || !sessionId) {
+        console.log("[SFU] Connection not ready. Queueing track subscription...");
+        pendingSubRef.current = { remoteSessionId, trackName };
+        return;
+    }
+
     const appId = import.meta.env.VITE_CLOUDFLARE_APP_ID;
     const appSecret = import.meta.env.VITE_CLOUDFLARE_APP_SECRET;
 
-    if (!pc || !sessionId || !appId || !appSecret) {
-      console.error("[SFU] Cannot subscribe to track: missing connection or credentials");
+    if (!appId || !appSecret) {
+      console.error("[SFU] Cannot subscribe to track: missing connection or credentials", { pc: !!pc, sessionId, appId: !!appId, appSecret: !!appSecret });
       return;
     }
 
     try {
-      const transceiver = pc.addTransceiver('audio', { direction: 'recvonly' });
+      let transceiver = pc.getTransceivers().find(t => t.direction === 'recvonly');
+      if (!transceiver) {
+          transceiver = pc.addTransceiver('audio', { direction: 'recvonly' });
+      }
 
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
+      await waitForIceGathering(pc);
+
+      const localDescription = pc.localDescription;
+      if (!localDescription) throw new Error("No local description");
+
+      const mid = transceiver.mid;
+      if (!mid) throw new Error("Transceiver mid is null");
 
       const response = await fetch(`https://rtc.live.cloudflare.com/v1/apps/${appId}/sessions/${sessionId}/tracks/new`, {
         method: 'POST',
@@ -34,15 +72,15 @@ export function useCloudflareSFU(roomId: string | null) {
         },
         body: JSON.stringify({
           sessionDescription: {
-            type: offer.type,
-            sdp: offer.sdp
+            type: localDescription.type,
+            sdp: localDescription.sdp
           },
           tracks: [
             {
               location: "remote",
               sessionId: remoteSessionId,
               trackName: trackName,
-              mid: transceiver.mid
+              mid: mid
             }
           ]
         })
@@ -58,7 +96,8 @@ export function useCloudflareSFU(roomId: string | null) {
         await pc.setRemoteDescription(new RTCSessionDescription(data.sessionDescription));
         console.log("[SFU] Successfully subscribed to remote audio track");
       } else {
-        throw new Error("No sessionDescription in Cloudflare response for track subscribe");
+        console.error("[SFU] Cloudflare error response:", data);
+        throw new Error(`No sessionDescription. Response: ${JSON.stringify(data)}`);
       }
     } catch (error) {
       console.error("[SFU] Failed to subscribe to track:", error);
@@ -90,7 +129,13 @@ export function useCloudflareSFU(roomId: string | null) {
 
       pc.ontrack = (event) => {
         console.log("[SFU] Received remote track", event.track.kind);
-        setRemoteStream(event.streams[0]);
+        if (event.streams && event.streams.length > 0) {
+            setRemoteStream(event.streams[0]);
+        } else {
+            const stream = new MediaStream();
+            stream.addTrack(event.track);
+            setRemoteStream(stream);
+        }
       };
 
       // Create a dummy audio transceiver to ensure the SDP offer has at least one audio m-line.
@@ -100,6 +145,10 @@ export function useCloudflareSFU(roomId: string | null) {
       // Create an offer
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
+      await waitForIceGathering(pc);
+
+      const localDescription = pc.localDescription;
+      if (!localDescription) throw new Error("No local description");
 
       // Send offer to Cloudflare Calls API
       const response = await fetch(`https://rtc.live.cloudflare.com/v1/apps/${appId}/sessions/new`, {
@@ -110,8 +159,8 @@ export function useCloudflareSFU(roomId: string | null) {
         },
         body: JSON.stringify({
           sessionDescription: {
-            type: offer.type,
-            sdp: offer.sdp
+            type: localDescription.type,
+            sdp: localDescription.sdp
           }
         })
       });
@@ -127,6 +176,13 @@ export function useCloudflareSFU(roomId: string | null) {
         await pc.setRemoteDescription(new RTCSessionDescription(data.sessionDescription));
         sessionIdRef.current = data.sessionId;
         setStatus('connected');
+
+        // Process eventuell sparad prenumeration
+        if (pendingSubRef.current) {
+            console.log("[SFU] Processing queued subscription...");
+            subscribeToTrack(pendingSubRef.current.remoteSessionId, pendingSubRef.current.trackName);
+            pendingSubRef.current = null;
+        }
       } else {
         throw new Error("No sessionDescription in Cloudflare response");
       }
@@ -163,6 +219,10 @@ export function useCloudflareSFU(roomId: string | null) {
 
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
+      await waitForIceGathering(pc);
+
+      const localDescription = pc.localDescription;
+      if (!localDescription) throw new Error("No local description");
 
       const response = await fetch(`https://rtc.live.cloudflare.com/v1/apps/${appId}/sessions/${sessionId}/tracks/new`, {
         method: 'POST',
@@ -172,8 +232,8 @@ export function useCloudflareSFU(roomId: string | null) {
         },
         body: JSON.stringify({
           sessionDescription: {
-            type: offer.type,
-            sdp: offer.sdp
+            type: localDescription.type,
+            sdp: localDescription.sdp
           },
           tracks: [
             {

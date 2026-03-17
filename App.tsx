@@ -216,12 +216,6 @@ const RoomSession: React.FC = () => {
   const { userRole } = useAppStore();
   const remoteAudioRef = useRef<HTMLAudioElement>(null);
 
-  useEffect(() => {
-    if (currentRoom) {
-      connectSfu();
-    }
-  }, [currentRoom, connectSfu]);
-
   // 2. Admin: Skicka radiomixen till molnet när den är redo (Robust version)
   useEffect(() => {
     let checkInterval: any;
