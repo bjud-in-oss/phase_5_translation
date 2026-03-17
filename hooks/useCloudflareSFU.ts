@@ -61,8 +61,7 @@ export function useCloudflareSFU(roomId: string | null) {
       const localDescription = pc.localDescription;
       if (!localDescription) throw new Error("No local description");
 
-      const mid = transceiver.mid;
-      if (!mid) throw new Error("Transceiver mid is null");
+      const mid = transceiver.mid || "0";
 
       const response = await fetch(`https://rtc.live.cloudflare.com/v1/apps/${appId}/sessions/${sessionId}/tracks/new`, {
         method: 'POST',

@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useRef } from 'react';
-import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, Timestamp, where } from 'firebase/firestore';
 import { db, auth } from '../firebase';
 import { useAppStore, UserRole } from '../stores/useAppStore';
 import { useCloudflareSFU } from './useCloudflareSFU';
@@ -67,6 +67,7 @@ export type DataChannelMessage =
 const CLIENT_ID = Math.random().toString(36).substring(2, 9);
 
 export function useDataChannel(roomId: string | null) {
+  const mountTimeRef = useRef(Timestamp.now());
   const sendMessageRef = useRef<(msg: Omit<DataChannelMessage, 'senderId' | 'senderRole'>) => void>(() => {});
   const { status, connect, disconnect, publishAudio, subscribeToTrack, remoteStream, publishedTrackRef } = useCloudflareSFU(roomId);
 
@@ -163,10 +164,13 @@ export function useDataChannel(roomId: string | null) {
   useEffect(() => {
     if (!roomId) return;
 
-    const messagesRef = collection(db, 'rooms', roomId, 'messages');
-    const q = query(messagesRef, orderBy('timestamp', 'asc'));
+    const messagesQuery = query(
+      collection(db, `rooms/${roomId}/messages`),
+      where('timestamp', '>=', mountTimeRef.current),
+      orderBy('timestamp', 'asc')
+    );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsubscribe = onSnapshot(messagesQuery, (snapshot) => {
       snapshot.docChanges().forEach((change) => {
         if (change.type === 'added') {
           const data = change.doc.data() as DataChannelMessage;
