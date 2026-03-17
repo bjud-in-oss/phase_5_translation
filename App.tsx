@@ -210,7 +210,7 @@ const RoomSession: React.FC = () => {
     getRadiomixStream
   } = useGeminiLive();
 
-  const { sendMessage, remoteStream, publishAudio, connectSfu, sfuStatus } = useDataChannel(currentRoom);
+  const { sendMessage, announceTrack, remoteStream, publishAudio, connectSfu, sfuStatus } = useDataChannel(currentRoom);
   const { userRole } = useAppStore();
   const remoteAudioRef = useRef<HTMLAudioElement>(null);
 
@@ -229,8 +229,13 @@ const RoomSession: React.FC = () => {
       checkInterval = setInterval(() => {
         const radiomix = getRadiomixStream ? getRadiomixStream() : null;
         if (radiomix && radiomix.getAudioTracks().length > 0) {
-          publishAudio(radiomix.getAudioTracks()[0]);
-          console.log("📡 Publicerar Radiomix till Cloudflare SFU");
+          const track = radiomix.getAudioTracks()[0];
+          publishAudio(track).then((sessionId) => {
+            if (sessionId) {
+              announceTrack(sessionId, track.id);
+              console.log("📡 Ljud publicerat och annonserat!");
+            }
+          });
           clearInterval(checkInterval); // Sluta kolla när vi har publicerat
         }
       }, 500); // Kolla varje halvsekund
@@ -239,7 +244,7 @@ const RoomSession: React.FC = () => {
     return () => {
       if (checkInterval) clearInterval(checkInterval);
     };
-  }, [sfuStatus, userRole, getRadiomixStream, publishAudio]);
+  }, [sfuStatus, userRole, getRadiomixStream, publishAudio, announceTrack]);
 
   useEffect(() => {
     if (remoteAudioRef.current && remoteStream && userRole === 'listener') {

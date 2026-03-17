@@ -2,12 +2,12 @@ import { useState, useCallback, useRef } from 'react';
 
 export type SFUStatus = 'disconnected' | 'connecting' | 'connected';
 
-export function useCloudflareSFU(roomId: string | null, onMessage?: (msg: any) => void) {
+export function useCloudflareSFU(roomId: string | null) {
   const [status, setStatus] = useState<SFUStatus>('disconnected');
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
-  const dataChannelRef = useRef<RTCDataChannel | null>(null);
   const sessionIdRef = useRef<string | null>(null);
+  const publishedTrackRef = useRef<{ sessionId: string, trackName: string } | null>(null);
 
   const subscribeToTrack = useCallback(async (remoteSessionId: string, trackName: string) => {
     const pc = peerConnectionRef.current;
@@ -21,7 +21,7 @@ export function useCloudflareSFU(roomId: string | null, onMessage?: (msg: any) =
     }
 
     try {
-      pc.addTransceiver('audio', { direction: 'recvonly' });
+      const transceiver = pc.addTransceiver('audio', { direction: 'recvonly' });
 
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
@@ -41,7 +41,8 @@ export function useCloudflareSFU(roomId: string | null, onMessage?: (msg: any) =
             {
               location: "remote",
               sessionId: remoteSessionId,
-              trackName: trackName
+              trackName: trackName,
+              mid: transceiver.mid
             }
           ]
         })
@@ -92,37 +93,9 @@ export function useCloudflareSFU(roomId: string | null, onMessage?: (msg: any) =
         setRemoteStream(event.streams[0]);
       };
 
-      // Create DataChannel
-      const dc = pc.createDataChannel('motesbryggan-data');
-      dataChannelRef.current = dc;
-
-      dc.onopen = () => {
-        console.log("[SFU] DataChannel opened");
-        setStatus('connected');
-      };
-
-      dc.onclose = () => {
-        console.log("[SFU] DataChannel closed");
-        setStatus('disconnected');
-      };
-
-      dc.onerror = (error) => {
-        console.error("[SFU] DataChannel error:", error);
-      };
-
-      dc.onmessage = (event) => {
-        try {
-          const parsed = JSON.parse(event.data);
-          
-          if (parsed.type === 'TRACK_AVAILABLE' && parsed.sessionId !== sessionIdRef.current) {
-            subscribeToTrack(parsed.sessionId, parsed.trackName);
-          } else if (onMessage) {
-            onMessage(parsed);
-          }
-        } catch (e) {
-          console.error("[SFU] Failed to parse DataChannel message", e);
-        }
-      };
+      // Create a dummy audio transceiver to ensure the SDP offer has at least one audio m-line.
+      // Cloudflare Calls API rejects offers without audio/video tracks with a 400 Bad Request.
+      pc.addTransceiver('audio', { direction: 'recvonly' });
 
       // Create an offer
       const offer = await pc.createOffer();
@@ -153,6 +126,7 @@ export function useCloudflareSFU(roomId: string | null, onMessage?: (msg: any) =
       if (data && data.sessionDescription) {
         await pc.setRemoteDescription(new RTCSessionDescription(data.sessionDescription));
         sessionIdRef.current = data.sessionId;
+        setStatus('connected');
       } else {
         throw new Error("No sessionDescription in Cloudflare response");
       }
@@ -161,13 +135,9 @@ export function useCloudflareSFU(roomId: string | null, onMessage?: (msg: any) =
       console.error("[SFU] Failed to connect:", error);
       setStatus('disconnected');
     }
-  }, [roomId, onMessage, subscribeToTrack]);
+  }, [roomId, subscribeToTrack]);
 
   const disconnect = useCallback(() => {
-    if (dataChannelRef.current) {
-      dataChannelRef.current.close();
-      dataChannelRef.current = null;
-    }
     if (peerConnectionRef.current) {
       peerConnectionRef.current.close();
       peerConnectionRef.current = null;
@@ -175,14 +145,6 @@ export function useCloudflareSFU(roomId: string | null, onMessage?: (msg: any) =
     sessionIdRef.current = null;
     setRemoteStream(null);
     setStatus('disconnected');
-  }, []);
-
-  const sendData = useCallback((message: any) => {
-    if (dataChannelRef.current && dataChannelRef.current.readyState === 'open') {
-      dataChannelRef.current.send(JSON.stringify(message));
-    } else {
-      console.warn("[SFU] DataChannel not open, cannot send message");
-    }
   }, []);
 
   const publishAudio = useCallback(async (track: MediaStreamTrack) => {
@@ -197,7 +159,7 @@ export function useCloudflareSFU(roomId: string | null, onMessage?: (msg: any) =
     }
 
     try {
-      pc.addTransceiver(track, { direction: 'sendonly' });
+      const transceiver = pc.addTransceiver(track, { direction: 'sendonly' });
 
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
@@ -216,7 +178,7 @@ export function useCloudflareSFU(roomId: string | null, onMessage?: (msg: any) =
           tracks: [
             {
               location: "local",
-              mid: pc.getTransceivers().find(t => t.sender.track === track)?.mid,
+              mid: transceiver.mid,
               trackName: track.id
             }
           ]
@@ -232,21 +194,16 @@ export function useCloudflareSFU(roomId: string | null, onMessage?: (msg: any) =
       if (data && data.sessionDescription) {
         await pc.setRemoteDescription(new RTCSessionDescription(data.sessionDescription));
         console.log("[SFU] Successfully published audio track");
-        
-        if (dataChannelRef.current && dataChannelRef.current.readyState === 'open') {
-          dataChannelRef.current.send(JSON.stringify({ 
-            type: 'TRACK_AVAILABLE', 
-            sessionId: sessionId, 
-            trackName: track.id 
-          }));
-        }
+        publishedTrackRef.current = { sessionId, trackName: track.id };
+        return sessionId;
       } else {
         throw new Error("No sessionDescription in Cloudflare response for track publish");
       }
     } catch (error) {
       console.error("[SFU] Failed to publish audio:", error);
+      return null;
     }
   }, []);
 
-  return { status, connect, disconnect, sendData, publishAudio, remoteStream };
+  return { status, connect, disconnect, publishAudio, subscribeToTrack, remoteStream, publishedTrackRef };
 }

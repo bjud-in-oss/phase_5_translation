@@ -301,26 +301,7 @@ export function useGeminiSession(callbacks: SessionCallbacks) {
 
     // NEW: Send Arbitrary Text Signals (Puppeteer Protocol)
     const sendTextSignal = useCallback((text: string) => {
-        if (sessionRef.current) {
-            try {
-                // This format forces the model to treat the text as "User Input"
-                // and respond immediately due to turnComplete: true
-                if (typeof sessionRef.current.sendClientContent === 'function') {
-                    sessionRef.current.sendClientContent({
-                        turns: [{
-                            role: 'user',
-                            parts: [{ text: text }]
-                        }],
-                        turnComplete: true
-                    });
-                    console.log(`%c[Puppeteer] 📨 Signal sent: ${text}`, "color: fuchsia; font-weight: bold;");
-                } else {
-                    console.warn("[Session] sendClientContent method not available");
-                }
-            } catch (e) {
-                console.error("Signal failed", e);
-            }
-        }
+        console.warn("[Puppeteer] Text-signal inaktiverad pga 1006 Error.");
     }, []);
 
     const setStandby = useCallback(() => {
