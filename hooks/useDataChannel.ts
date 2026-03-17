@@ -1,6 +1,59 @@
 import { useEffect, useCallback, useRef } from 'react';
+import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from 'firebase/firestore';
+import { db, auth } from '../firebase';
 import { useAppStore, UserRole } from '../stores/useAppStore';
 import { useCloudflareSFU } from './useCloudflareSFU';
+
+enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId: string | undefined;
+    email: string | null | undefined;
+    emailVerified: boolean | undefined;
+    isAnonymous: boolean | undefined;
+    tenantId: string | null | undefined;
+    providerInfo: {
+      providerId: string;
+      displayName: string | null;
+      email: string | null;
+      photoUrl: string | null;
+    }[];
+  }
+}
+
+function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      emailVerified: auth.currentUser?.emailVerified,
+      isAnonymous: auth.currentUser?.isAnonymous,
+      tenantId: auth.currentUser?.tenantId,
+      providerInfo: auth.currentUser?.providerData.map(provider => ({
+        providerId: provider.providerId,
+        displayName: provider.displayName,
+        email: provider.email,
+        photoUrl: provider.photoURL
+      })) || []
+    },
+    operationType,
+    path
+  }
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  throw new Error(JSON.stringify(errInfo));
+}
 
 export type DataChannelMessage = 
   | { type: 'REQUEST_FULL_STATE'; senderId: string; senderRole: UserRole }
@@ -15,18 +68,20 @@ const CLIENT_ID = Math.random().toString(36).substring(2, 9);
 
 export function useDataChannel(roomId: string | null) {
   const sendMessageRef = useRef<(msg: Omit<DataChannelMessage, 'senderId' | 'senderRole'>) => void>(() => {});
-  const bcRef = useRef<BroadcastChannel | null>(null);
   const { status, connect, disconnect, publishAudio, subscribeToTrack, remoteStream, publishedTrackRef } = useCloudflareSFU(roomId);
 
   const announceTrack = useCallback((sessionId: string, trackName: string) => {
+    if (!roomId) return;
     const { userRole } = useAppStore.getState();
-    bcRef.current?.postMessage({
+    const messagesRef = collection(db, 'rooms', roomId, 'messages');
+    addDoc(messagesRef, {
       type: 'TRACK_AVAILABLE',
       payload: { sessionId, trackName },
       senderId: CLIENT_ID,
-      senderRole: userRole
-    });
-  }, []);
+      senderRole: userRole,
+      timestamp: serverTimestamp()
+    }).catch(err => handleFirestoreError(err, OperationType.WRITE, `rooms/${roomId}/messages`));
+  }, [roomId]);
 
   const handleMessage = useCallback((msg: DataChannelMessage) => {
     if (msg.senderId === CLIENT_ID) return; // Ignore our own messages
@@ -89,15 +144,17 @@ export function useDataChannel(roomId: string | null) {
   }, [subscribeToTrack, announceTrack, publishedTrackRef]);
 
   const sendMessage = useCallback((msg: Omit<DataChannelMessage, 'senderId' | 'senderRole'>) => {
+    if (!roomId) return;
     const { userRole } = useAppStore.getState();
-    const fullMessage: DataChannelMessage = {
+    
+    const messagesRef = collection(db, 'rooms', roomId, 'messages');
+    addDoc(messagesRef, {
       ...msg,
       senderId: CLIENT_ID,
-      senderRole: userRole
-    } as DataChannelMessage;
-    
-    bcRef.current?.postMessage(fullMessage);
-  }, []);
+      senderRole: userRole,
+      timestamp: serverTimestamp()
+    }).catch(err => handleFirestoreError(err, OperationType.WRITE, `rooms/${roomId}/messages`));
+  }, [roomId]);
 
   useEffect(() => {
     sendMessageRef.current = sendMessage;
@@ -106,18 +163,27 @@ export function useDataChannel(roomId: string | null) {
   useEffect(() => {
     if (!roomId) return;
 
-    bcRef.current = new BroadcastChannel('room-' + roomId);
-    bcRef.current.onmessage = (event) => {
-      handleMessage(event.data);
-    };
+    const messagesRef = collection(db, 'rooms', roomId, 'messages');
+    const q = query(messagesRef, orderBy('timestamp', 'asc'));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === 'added') {
+          const data = change.doc.data() as DataChannelMessage;
+          // Ignore messages that don't have a timestamp yet (local optimistic updates)
+          // or handle them. Actually, local updates will have `hasPendingWrites`.
+          // But we filter out our own messages via CLIENT_ID anyway.
+          handleMessage(data);
+        }
+      });
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, `rooms/${roomId}/messages`);
+    });
 
     connect();
 
     return () => {
-      if (bcRef.current) {
-        bcRef.current.close();
-        bcRef.current = null;
-      }
+      unsubscribe();
       disconnect();
     };
   }, [roomId, connect, disconnect, handleMessage]);

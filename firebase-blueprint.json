@@ -1,0 +1,40 @@
+{
+  "entities": {
+    "Message": {
+      "title": "Message",
+      "description": "A signaling message sent between users in a room.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "The type of the message, e.g., 'TRACK_AVAILABLE', 'REQUEST_FULL_STATE', 'SYNC_STATE'."
+        },
+        "payload": {
+          "type": "object",
+          "description": "The message payload, containing data specific to the message type."
+        },
+        "senderId": {
+          "type": "string",
+          "description": "The unique ID of the sender."
+        },
+        "senderRole": {
+          "type": "string",
+          "description": "The role of the sender, e.g., 'admin', 'listener', 'teacher'."
+        },
+        "timestamp": {
+          "type": "timestamp",
+          "description": "The time the message was sent."
+        }
+      },
+      "required": ["type", "senderId", "senderRole", "timestamp"]
+    }
+  },
+  "firestore": {
+    "rooms/{roomId}/messages/{messageId}": {
+      "schema": {
+        "$ref": "Message"
+      },
+      "description": "Messages sent within a specific room."
+    }
+  }
+}

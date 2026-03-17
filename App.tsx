@@ -1,5 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
+import { signInAnonymously } from 'firebase/auth';
+import { auth } from './firebase';
 import { useGeminiLive } from './hooks/useGeminiLive';
 import { useWakeLock } from './hooks/useWakeLock';
 import { useDataChannel } from './hooks/useDataChannel';
@@ -246,12 +248,25 @@ const RoomSession: React.FC = () => {
     };
   }, [sfuStatus, userRole, getRadiomixStream, publishAudio, announceTrack]);
 
+  const [hasJoinedAudio, setHasJoinedAudio] = useState(false);
+
   useEffect(() => {
     if (remoteAudioRef.current && remoteStream && userRole === 'listener') {
-      remoteAudioRef.current.srcObject = remoteStream;
-      remoteAudioRef.current.play().catch(e => console.error("Error playing remote stream:", e));
+      if (remoteAudioRef.current.srcObject !== remoteStream) {
+        remoteAudioRef.current.srcObject = remoteStream;
+      }
+      if (hasJoinedAudio) {
+        remoteAudioRef.current.play().catch(e => console.error("Error playing remote stream:", e));
+      }
     }
-  }, [remoteStream, userRole]);
+  }, [remoteStream, userRole, hasJoinedAudio]);
+
+  const handlePlayAudio = () => {
+    setHasJoinedAudio(true);
+    if (remoteAudioRef.current) {
+      remoteAudioRef.current.play().catch(e => console.error("Still cannot play:", e));
+    }
+  };
 
   useEffect(() => {
     if (activeMode !== 'off') {
@@ -472,7 +487,30 @@ const RoomSession: React.FC = () => {
       
       {/* Hidden audio element for listeners */}
       {userRole === 'listener' && (
-        <audio ref={remoteAudioRef} autoPlay playsInline style={{ display: 'none' }} />
+        <>
+          <audio ref={remoteAudioRef} playsInline style={{ display: 'none' }} />
+          {!hasJoinedAudio && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+              <div className="bg-zinc-900 p-8 rounded-2xl flex flex-col items-center gap-6 max-w-sm text-center border border-white/10 shadow-2xl">
+                <div className="w-16 h-16 bg-indigo-500/20 rounded-full flex items-center justify-center">
+                  <svg className="w-8 h-8 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold text-white mb-2">Anslut till sändningen</h3>
+                  <p className="text-zinc-400 text-sm">Klicka nedan för att ansluta till ljudet.</p>
+                </div>
+                <button 
+                  onClick={handlePlayAudio}
+                  className="w-full py-3 px-6 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-medium transition-colors"
+                >
+                  Starta Ljud
+                </button>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
@@ -484,6 +522,15 @@ const App: React.FC = () => {
   const { roomState, setRoomId, setUserRole } = useAppStore();
 
   useEffect(() => {
+    const initAuth = async () => {
+      try {
+        await signInAnonymously(auth);
+      } catch (error) {
+        console.error("Firebase Auth Error:", error);
+      }
+    };
+    initAuth();
+
     const params = new URLSearchParams(window.location.search);
     const roleParam = params.get('role') as UserRole | null;
     const roomParam = params.get('room');

@@ -1,0 +1,46 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: rooms/{roomId}/messages
+    // Document ID: auto-generated
+    // Fields:
+    //   - type: string (required) - The type of the message
+    //   - payload: map (optional) - The message payload
+    //   - senderId: string (required) - The unique ID of the sender
+    //   - senderRole: string (required) - The role of the sender
+    //   - timestamp: timestamp (required) - The time the message was sent
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+       return request.auth != null;
+    }
+    
+    function hasRequiredFields(fields) {
+       return request.resource.data.keys().hasAll(fields);
+    }
+    
+    function isValidMessage() {
+      return hasRequiredFields(['type', 'senderId', 'senderRole', 'timestamp']) &&
+             request.resource.data.type is string &&
+             request.resource.data.senderId is string &&
+             request.resource.data.senderRole is string &&
+             request.resource.data.timestamp is timestamp;
+    }
+
+    match /rooms/{roomId}/messages/{messageId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidMessage();
+      allow update, delete: if false; // Messages are immutable
+    }
+  }
+}
