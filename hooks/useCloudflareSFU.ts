@@ -52,7 +52,8 @@ export function useCloudflareSFU(roomId: string | null) {
     try {
       if (subscribedTracksRef.current.has(trackName)) return;
 
-      const transceiver = pc.addTransceiver('audio', { direction: 'recvonly' });
+      let transceiver = pc.getTransceivers()[0];
+      if (!transceiver) transceiver = pc.addTransceiver('audio', { direction: 'recvonly' });
 
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);

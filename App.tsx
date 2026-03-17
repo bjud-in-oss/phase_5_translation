@@ -243,17 +243,17 @@ const RoomSession: React.FC = () => {
   }, [sfuStatus, userRole, getRadiomixStream, publishAudio, announceTrack]);
 
   const [hasJoinedAudio, setHasJoinedAudio] = useState(false);
+  const [audioBlocked, setAudioBlocked] = useState(false);
 
   useEffect(() => {
     if (remoteAudioRef.current && remoteStream && userRole === 'listener') {
-      if (remoteAudioRef.current.srcObject !== remoteStream) {
-        remoteAudioRef.current.srcObject = remoteStream;
-      }
-      if (hasJoinedAudio) {
-        remoteAudioRef.current.play().catch(e => console.error("Error playing remote stream:", e));
-      }
+      remoteAudioRef.current.srcObject = remoteStream;
+      remoteAudioRef.current.play().catch(e => {
+          console.error("Autoplay blocked:", e);
+          setAudioBlocked(true);
+      });
     }
-  }, [remoteStream, userRole, hasJoinedAudio]);
+  }, [remoteStream, userRole]);
 
   const handlePlayAudio = () => {
     setHasJoinedAudio(true);

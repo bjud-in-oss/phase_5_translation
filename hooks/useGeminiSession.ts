@@ -284,19 +284,7 @@ export function useGeminiSession(callbacks: SessionCallbacks) {
 
     // NEW: Explicitly signal end of turn to force a response
     const sendEndTurn = useCallback(() => {
-        // RACE CONDITION FIX: Trust sessionRef over status state
-        // AI FIX: Added safety check for send method
-        if (sessionRef.current) {
-            try {
-                // The 12-2025 model does not support empty turnComplete signals via sendClientContent.
-                // We rely on the Silence Burst (sent right before this) to trigger the VAD instead.
-                if ((window as any).APP_LOGS_ENABLED) {
-                    console.log("%c[Network] 🛑 SKIPPED END_OF_TURN SIGNAL (Incompatible with 12-2025 model)", "color: orange; font-weight: bold;");
-                }
-            } catch (e) {
-                console.warn("[Session] Failed to send EndTurn signal", e);
-            }
-        }
+        console.log("[Session] EndTurn signal skipped (Not supported by Native Audio)");
     }, []);
 
     // NEW: Send Arbitrary Text Signals (Puppeteer Protocol)
