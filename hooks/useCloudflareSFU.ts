@@ -29,6 +29,7 @@ export function useCloudflareSFU(roomId: string | null) {
   const sessionIdRef = useRef<string | null>(null);
   const publishedTrackRef = useRef<{ sessionId: string, trackName: string } | null>(null);
   const pendingSubRef = useRef<{remoteSessionId: string, trackName: string} | null>(null);
+  const subscribedTracksRef = useRef<Set<string>>(new Set());
 
   const subscribeToTrack = useCallback(async (remoteSessionId: string, trackName: string) => {
     const pc = peerConnectionRef.current;
@@ -49,10 +50,9 @@ export function useCloudflareSFU(roomId: string | null) {
     }
 
     try {
-      let transceiver = pc.getTransceivers().find(t => t.direction === 'recvonly');
-      if (!transceiver) {
-          transceiver = pc.addTransceiver('audio', { direction: 'recvonly' });
-      }
+      if (subscribedTracksRef.current.has(trackName)) return;
+
+      const transceiver = pc.addTransceiver('audio', { direction: 'recvonly' });
 
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
@@ -61,7 +61,8 @@ export function useCloudflareSFU(roomId: string | null) {
       const localDescription = pc.localDescription;
       if (!localDescription) throw new Error("No local description");
 
-      const mid = transceiver.mid || "0";
+      const mid = transceiver.mid;
+      if (!mid) throw new Error("Transceiver mid is missing");
 
       const response = await fetch(`https://rtc.live.cloudflare.com/v1/apps/${appId}/sessions/${sessionId}/tracks/new`, {
         method: 'POST',
@@ -93,6 +94,7 @@ export function useCloudflareSFU(roomId: string | null) {
       
       if (data && data.sessionDescription) {
         await pc.setRemoteDescription(new RTCSessionDescription(data.sessionDescription));
+        subscribedTracksRef.current.add(trackName);
         console.log("[SFU] Successfully subscribed to remote audio track");
       } else {
         console.error("[SFU] Cloudflare error response:", data);
