@@ -9,6 +9,61 @@ export function useCloudflareSFU(roomId: string | null, onMessage?: (msg: any) =
   const dataChannelRef = useRef<RTCDataChannel | null>(null);
   const sessionIdRef = useRef<string | null>(null);
 
+  const subscribeToTrack = useCallback(async (remoteSessionId: string, trackName: string) => {
+    const pc = peerConnectionRef.current;
+    const sessionId = sessionIdRef.current;
+    const appId = import.meta.env.VITE_CLOUDFLARE_APP_ID;
+    const appSecret = import.meta.env.VITE_CLOUDFLARE_APP_SECRET;
+
+    if (!pc || !sessionId || !appId || !appSecret) {
+      console.error("[SFU] Cannot subscribe to track: missing connection or credentials");
+      return;
+    }
+
+    try {
+      pc.addTransceiver('audio', { direction: 'recvonly' });
+
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+
+      const response = await fetch(`https://rtc.live.cloudflare.com/v1/apps/${appId}/sessions/${sessionId}/tracks/new`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${appSecret}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          sessionDescription: {
+            type: offer.type,
+            sdp: offer.sdp
+          },
+          tracks: [
+            {
+              location: "remote",
+              sessionId: remoteSessionId,
+              trackName: trackName
+            }
+          ]
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Cloudflare API error subscribing to track: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      if (data && data.sessionDescription) {
+        await pc.setRemoteDescription(new RTCSessionDescription(data.sessionDescription));
+        console.log("[SFU] Successfully subscribed to remote audio track");
+      } else {
+        throw new Error("No sessionDescription in Cloudflare response for track subscribe");
+      }
+    } catch (error) {
+      console.error("[SFU] Failed to subscribe to track:", error);
+    }
+  }, []);
+
   const connect = useCallback(async () => {
     if (!roomId) return;
     
@@ -56,13 +111,16 @@ export function useCloudflareSFU(roomId: string | null, onMessage?: (msg: any) =
       };
 
       dc.onmessage = (event) => {
-        if (onMessage) {
-          try {
-            const parsed = JSON.parse(event.data);
+        try {
+          const parsed = JSON.parse(event.data);
+          
+          if (parsed.type === 'TRACK_AVAILABLE' && parsed.sessionId !== sessionIdRef.current) {
+            subscribeToTrack(parsed.sessionId, parsed.trackName);
+          } else if (onMessage) {
             onMessage(parsed);
-          } catch (e) {
-            console.error("[SFU] Failed to parse DataChannel message", e);
           }
+        } catch (e) {
+          console.error("[SFU] Failed to parse DataChannel message", e);
         }
       };
 
@@ -103,7 +161,7 @@ export function useCloudflareSFU(roomId: string | null, onMessage?: (msg: any) =
       console.error("[SFU] Failed to connect:", error);
       setStatus('disconnected');
     }
-  }, [roomId, onMessage]);
+  }, [roomId, onMessage, subscribeToTrack]);
 
   const disconnect = useCallback(() => {
     if (dataChannelRef.current) {
@@ -174,6 +232,14 @@ export function useCloudflareSFU(roomId: string | null, onMessage?: (msg: any) =
       if (data && data.sessionDescription) {
         await pc.setRemoteDescription(new RTCSessionDescription(data.sessionDescription));
         console.log("[SFU] Successfully published audio track");
+        
+        if (dataChannelRef.current && dataChannelRef.current.readyState === 'open') {
+          dataChannelRef.current.send(JSON.stringify({ 
+            type: 'TRACK_AVAILABLE', 
+            sessionId: sessionId, 
+            trackName: track.id 
+          }));
+        }
       } else {
         throw new Error("No sessionDescription in Cloudflare response for track publish");
       }

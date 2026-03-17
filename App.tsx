@@ -220,16 +220,25 @@ const RoomSession: React.FC = () => {
     }
   }, [currentRoom, connectSfu]);
 
+  // 2. Admin: Skicka radiomixen till molnet när den är redo (Robust version)
   useEffect(() => {
-    if (sfuStatus === 'connected' && userRole === 'admin') {
-      const stream = getRadiomixStream();
-      if (stream) {
-        const audioTrack = stream.getAudioTracks()[0];
-        if (audioTrack) {
-          publishAudio(audioTrack);
+    let checkInterval: any;
+
+    if (sfuStatus === 'connected' && (userRole === 'admin' || userRole === 'teacher')) {
+      // Vi kollar regelbundet tills strömmen dyker upp
+      checkInterval = setInterval(() => {
+        const radiomix = getRadiomixStream ? getRadiomixStream() : null;
+        if (radiomix && radiomix.getAudioTracks().length > 0) {
+          publishAudio(radiomix.getAudioTracks()[0]);
+          console.log("📡 Publicerar Radiomix till Cloudflare SFU");
+          clearInterval(checkInterval); // Sluta kolla när vi har publicerat
         }
-      }
+      }, 500); // Kolla varje halvsekund
     }
+
+    return () => {
+      if (checkInterval) clearInterval(checkInterval);
+    };
   }, [sfuStatus, userRole, getRadiomixStream, publishAudio]);
 
   useEffect(() => {
