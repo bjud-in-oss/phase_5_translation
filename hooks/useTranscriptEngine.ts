@@ -78,11 +78,36 @@ export function useTranscriptEngine() {
         responseGroupIdRef.current = null;
     }, []);
 
+    const injectRemoteTranscript = useCallback((remoteTranscript: TranscriptItem & { isFinal?: boolean }) => {
+        if (!remoteTranscript || !remoteTranscript.id) return;
+        
+        if (remoteTranscript.isFinal) {
+            setHistory(h => {
+                const index = h.findIndex(item => item.id === remoteTranscript.id);
+                if (index !== -1) {
+                    const newHistory = [...h];
+                    newHistory[index] = remoteTranscript;
+                    return newHistory;
+                }
+                return [...h, remoteTranscript];
+            });
+            setActiveTranscript(current => {
+                if (current && current.id === remoteTranscript.id) {
+                    return null;
+                }
+                return current;
+            });
+        } else {
+            setActiveTranscript(remoteTranscript);
+        }
+    }, []);
+
     return {
         history,
         activeTranscript,
         addTextFragment,
         finalizeTurn,
-        resetTranscripts
+        resetTranscripts,
+        injectRemoteTranscript
     };
 }

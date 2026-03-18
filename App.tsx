@@ -209,12 +209,40 @@ const RoomSession: React.FC = () => {
     setIsTranscriptionEnabled,
     isLocalAiAudioEnabled,
     toggleLocalAiAudio,
-    getRadiomixStream
+    getRadiomixStream,
+    activeTranscript,
+    injectRemoteTranscript
   } = useGeminiLive();
 
-  const { sendMessage, announceTrack, remoteStream, publishAudio, connectSfu, sfuStatus } = useDataChannel(currentRoom);
   const { userRole } = useAppStore();
+  const { sendMessage, announceTrack, remoteStream, publishAudio, connectSfu, sfuStatus, broadcastTranscript } = useDataChannel(
+    currentRoom,
+    undefined,
+    (transcript) => {
+      if (userRole === 'listener') {
+        injectRemoteTranscript(transcript);
+      }
+    }
+  );
   const remoteAudioRef = useRef<HTMLAudioElement>(null);
+
+  // NEW: Broadcast transcripts if we are Admin/Teacher
+  useEffect(() => {
+    if (userRole === 'admin' || userRole === 'teacher') {
+      if (activeTranscript) {
+        broadcastTranscript(activeTranscript);
+      }
+    }
+  }, [activeTranscript, broadcastTranscript, userRole]);
+
+  useEffect(() => {
+    if (userRole === 'admin' || userRole === 'teacher') {
+      if (transcripts.length > 0) {
+        const latest = transcripts[transcripts.length - 1];
+        broadcastTranscript({ ...latest, isFinal: true });
+      }
+    }
+  }, [transcripts, broadcastTranscript, userRole]);
 
   // 2. Admin: Skicka radiomixen till molnet när den är redo (Robust version)
   useEffect(() => {
@@ -248,18 +276,26 @@ const RoomSession: React.FC = () => {
   useEffect(() => {
     if (remoteAudioRef.current && remoteStream && userRole === 'listener') {
       remoteAudioRef.current.srcObject = remoteStream;
-      remoteAudioRef.current.play().catch(e => {
-          console.error("Autoplay blocked:", e);
-          setAudioBlocked(true);
-      });
+      
+      // Only attempt autoplay if the user has already clicked the join button
+      if (hasJoinedAudio) {
+        remoteAudioRef.current.play().catch(e => {
+            console.error("Autoplay blocked:", e);
+            setAudioBlocked(true);
+        });
+      }
     }
-  }, [remoteStream, userRole]);
+  }, [remoteStream, userRole, hasJoinedAudio]);
 
   const handlePlayAudio = () => {
     setHasJoinedAudio(true);
     if (remoteAudioRef.current) {
-      remoteAudioRef.current.play().catch(e => console.error("Still cannot play:", e));
+      // If srcObject is already set, play it. Otherwise the useEffect will play it when stream arrives.
+      if (remoteAudioRef.current.srcObject) {
+        remoteAudioRef.current.play().catch(e => console.error("Still cannot play:", e));
+      }
     }
+    setAudioBlocked(false);
   };
 
   useEffect(() => {
@@ -483,7 +519,7 @@ const RoomSession: React.FC = () => {
       {userRole === 'listener' && (
         <>
           <audio ref={remoteAudioRef} playsInline style={{ display: 'none' }} />
-          {!hasJoinedAudio && (
+          {(!hasJoinedAudio || audioBlocked) && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
               <div className="bg-zinc-900 p-8 rounded-2xl flex flex-col items-center gap-6 max-w-sm text-center border border-white/10 shadow-2xl">
                 <div className="w-16 h-16 bg-indigo-500/20 rounded-full flex items-center justify-center">

@@ -55,7 +55,9 @@ export function useCloudflareSFU(roomId: string | null) {
       let transceiver = pc.getTransceivers()[0];
       if (!transceiver) transceiver = pc.addTransceiver('audio', { direction: 'recvonly' });
 
+      if (pc.signalingState === 'closed') return;
       const offer = await pc.createOffer();
+      if (pc.signalingState === 'closed') return;
       await pc.setLocalDescription(offer);
       await waitForIceGathering(pc);
 
@@ -93,6 +95,7 @@ export function useCloudflareSFU(roomId: string | null) {
       const data = await response.json();
       
       if (data && data.sessionDescription) {
+        if (pc.signalingState === 'closed') return;
         await pc.setRemoteDescription(new RTCSessionDescription(data.sessionDescription));
         subscribedTracksRef.current.add(trackName);
         console.log("[SFU] Successfully subscribed to remote audio track");
@@ -100,7 +103,11 @@ export function useCloudflareSFU(roomId: string | null) {
         console.error("[SFU] Cloudflare error response:", data);
         throw new Error(`No sessionDescription. Response: ${JSON.stringify(data)}`);
       }
-    } catch (error) {
+    } catch (error: any) {
+      if (peerConnectionRef.current?.signalingState === 'closed') {
+        console.log("[SFU] Connection closed during subscribe, ignoring error.");
+        return;
+      }
       console.error("[SFU] Failed to subscribe to track:", error);
     }
   }, []);
@@ -143,8 +150,10 @@ export function useCloudflareSFU(roomId: string | null) {
       // Cloudflare Calls API rejects offers without audio/video tracks with a 400 Bad Request.
       pc.addTransceiver('audio', { direction: 'recvonly' });
 
+      if (pc.signalingState === 'closed') return;
       // Create an offer
       const offer = await pc.createOffer();
+      if (pc.signalingState === 'closed') return;
       await pc.setLocalDescription(offer);
       await waitForIceGathering(pc);
 
@@ -174,6 +183,7 @@ export function useCloudflareSFU(roomId: string | null) {
       
       // Set remote description from Cloudflare's answer
       if (data && data.sessionDescription) {
+        if (pc.signalingState === 'closed') return;
         await pc.setRemoteDescription(new RTCSessionDescription(data.sessionDescription));
         sessionIdRef.current = data.sessionId;
         setStatus('connected');
@@ -188,7 +198,11 @@ export function useCloudflareSFU(roomId: string | null) {
         throw new Error("No sessionDescription in Cloudflare response");
       }
 
-    } catch (error) {
+    } catch (error: any) {
+      if (peerConnectionRef.current?.signalingState === 'closed') {
+        console.log("[SFU] Connection closed during connect, ignoring error.");
+        return;
+      }
       console.error("[SFU] Failed to connect:", error);
       setStatus('disconnected');
     }
@@ -218,7 +232,9 @@ export function useCloudflareSFU(roomId: string | null) {
     try {
       const transceiver = pc.addTransceiver(track, { direction: 'sendonly' });
 
+      if (pc.signalingState === 'closed') return null;
       const offer = await pc.createOffer();
+      if (pc.signalingState === 'closed') return null;
       await pc.setLocalDescription(offer);
       await waitForIceGathering(pc);
 
@@ -253,6 +269,7 @@ export function useCloudflareSFU(roomId: string | null) {
       const data = await response.json();
       
       if (data && data.sessionDescription) {
+        if (pc.signalingState === 'closed') return null;
         await pc.setRemoteDescription(new RTCSessionDescription(data.sessionDescription));
         console.log("[SFU] Successfully published audio track");
         publishedTrackRef.current = { sessionId, trackName: track.id };
@@ -260,7 +277,11 @@ export function useCloudflareSFU(roomId: string | null) {
       } else {
         throw new Error("No sessionDescription in Cloudflare response for track publish");
       }
-    } catch (error) {
+    } catch (error: any) {
+      if (peerConnectionRef.current?.signalingState === 'closed') {
+        console.log("[SFU] Connection closed during publish, ignoring error.");
+        return null;
+      }
       console.error("[SFU] Failed to publish audio:", error);
       return null;
     }

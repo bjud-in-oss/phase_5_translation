@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useRef } from 'react';
-import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, Timestamp, where } from 'firebase/firestore';
+import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, Timestamp, where, doc, setDoc } from 'firebase/firestore';
 import { db, auth } from '../firebase';
 import { useAppStore, UserRole } from '../stores/useAppStore';
 import { useCloudflareSFU } from './useCloudflareSFU';
@@ -66,7 +66,11 @@ export type DataChannelMessage =
 // We use a random ID to identify this specific client instance
 const CLIENT_ID = Math.random().toString(36).substring(2, 9);
 
-export function useDataChannel(roomId: string | null) {
+export function useDataChannel(
+  roomId: string | null,
+  onMessageReceived?: (msg: DataChannelMessage) => void,
+  onTranscriptReceived?: (transcript: any) => void
+) {
   const mountTimeRef = useRef(Timestamp.now());
   const sendMessageRef = useRef<(msg: Omit<DataChannelMessage, 'senderId' | 'senderRole'>) => void>(() => {});
   const { status, connect, disconnect, publishAudio, subscribeToTrack, remoteStream, publishedTrackRef } = useCloudflareSFU(roomId);
@@ -90,6 +94,10 @@ export function useDataChannel(roomId: string | null) {
     // STALE CLOSURE PREVENTION: Always get fresh state
     const state = useAppStore.getState();
     const { userRole, roomState, setMeetingState, setAllowSelfUnmute, setIsMuted } = state;
+
+    if (onMessageReceived) {
+      onMessageReceived(msg);
+    }
 
     // ZERO TRUST AUTHORIZATION: Verify sender role for admin commands
     const isAdminCommand = ['ADMIN_MUTE_ALL', 'SET_ALLOW_SELF_UNMUTE', 'MEETING_STATE_CHANGE', 'SYNC_STATE', 'TRACK_AVAILABLE'].includes(msg.type);
@@ -157,6 +165,20 @@ export function useDataChannel(roomId: string | null) {
     }).catch(err => handleFirestoreError(err, OperationType.WRITE, `rooms/${roomId}/messages`));
   }, [roomId]);
 
+  const broadcastTranscript = useCallback(async (transcript: any) => {
+    if (!roomId || !transcript || !transcript.id) return;
+    try {
+      const payload = {
+        ...transcript,
+        timestamp: transcript.timestamp instanceof Date ? transcript.timestamp.getTime() : transcript.timestamp,
+        lastUpdated: transcript.lastUpdated instanceof Date ? transcript.lastUpdated.getTime() : transcript.lastUpdated,
+      };
+      await setDoc(doc(db, 'rooms', roomId, 'transcripts', transcript.id), payload);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, `rooms/${roomId}/transcripts`);
+    }
+  }, [roomId]);
+
   useEffect(() => {
     sendMessageRef.current = sendMessage;
   }, [sendMessage]);
@@ -181,16 +203,40 @@ export function useDataChannel(roomId: string | null) {
         }
       });
     }, (error) => {
-      handleFirestoreError(error, OperationType.LIST, `rooms/${roomId}/messages`);
+      handleFirestoreError(error, OperationType.GET, `rooms/${roomId}/messages`);
+    });
+
+    const transcriptsQuery = query(
+      collection(db, `rooms/${roomId}/transcripts`),
+      where('timestamp', '>=', mountTimeRef.current.toMillis()),
+      orderBy('timestamp', 'asc')
+    );
+
+    const unsubscribeTranscripts = onSnapshot(transcriptsQuery, (snapshot) => {
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === 'added' || change.type === 'modified') {
+          const data = change.doc.data();
+          if (onTranscriptReceived) {
+            onTranscriptReceived({
+              ...data,
+              timestamp: typeof data.timestamp === 'number' ? new Date(data.timestamp) : data.timestamp,
+              lastUpdated: typeof data.lastUpdated === 'number' ? new Date(data.lastUpdated) : data.lastUpdated,
+            });
+          }
+        }
+      });
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, `rooms/${roomId}/transcripts`);
     });
 
     connect();
 
     return () => {
       unsubscribe();
+      unsubscribeTranscripts();
       disconnect();
     };
-  }, [roomId, connect, disconnect, handleMessage]);
+  }, [roomId, connect, disconnect, handleMessage, onTranscriptReceived]);
 
   // LATE JOINER: Request full state when joining
   useEffect(() => {
@@ -199,5 +245,5 @@ export function useDataChannel(roomId: string | null) {
     }
   }, [status, sendMessage]);
 
-  return { sendMessage, announceTrack, remoteStream, publishAudio, connectSfu: connect, sfuStatus: status };
+  return { sendMessage, announceTrack, remoteStream, publishAudio, connectSfu: connect, sfuStatus: status, broadcastTranscript };
 }

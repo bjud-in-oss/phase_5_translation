@@ -37,7 +37,8 @@ export function useGeminiLive() {
       activeTranscript, 
       addTextFragment, 
       finalizeTurn, 
-      resetTranscripts 
+      resetTranscripts,
+      injectRemoteTranscript
   } = useTranscriptEngine();
 
   const [error, setError] = useState<string | null>(null);
@@ -796,6 +797,8 @@ export function useGeminiLive() {
     simulateNetworkDrop,
     audioContext, 
     getBufferStatus,
+    activeTranscript,
+    injectRemoteTranscript,
     getRadiomixStream,
     isLocalAiAudioEnabled,
     toggleLocalAiAudio,
