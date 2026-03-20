@@ -150,6 +150,33 @@ export const MODULE_DOCS: Record<string, ModuleDoc> = {
             { abbr: 'JAB', full: 'Jabra (Auto)', desc: 'Använd "Auto" för smart fallback.' }
         ]
     },
+    'MODULE_BYOK_UX': {
+        title: 'Multi-Tenant BYOK & UX (Modul 93)',
+        description: 'Väg 3-arkitektur, hierarki, behörigheter och väntrums-logik för kostnadsskydd.',
+        params: [
+            { abbr: 'BYO', full: 'Bring Your Own Key', desc: 'Organisationer betalar sin egen AI/Egress.' },
+            { abbr: 'WAI', full: 'Väntrum', desc: 'Låser AI tills en Leader ansluter.' },
+            { abbr: 'ROL', full: 'Roller', desc: 'Main-Admin, Leader, Visitor.' }
+        ]
+    },
+    'MODULE_BFF_SECURITY': {
+        title: 'Säkerhet & BFF (Modul 94)',
+        description: 'Zero Trust, Netlify Functions som proxy och tidslås (Kill Switch).',
+        params: [
+            { abbr: 'BFF', full: 'Backend-For-Frontend', desc: 'Döljer API-nycklar från klienten.' },
+            { abbr: 'JWT', full: 'Firebase Auth', desc: 'Verifierar användare via Admin SDK.' },
+            { abbr: 'KIL', full: 'Kill Switch', desc: 'Tvingar stängning via expiresAt.' }
+        ]
+    },
+    'MODULE_SFU_MUNGING': {
+        title: 'SFU Adapters & Munging (Modul 95)',
+        description: 'SFU-agnostisk design och server-side SDP-modifiering för Cloudflare-skydd.',
+        params: [
+            { abbr: 'SFU', full: 'Adapter Pattern', desc: 'Stöd för LiveKit, Daily, Cloudflare.' },
+            { abbr: 'SDP', full: 'SDP Munging', desc: 'Tvingar 24kbps bandbredd på serversidan.' },
+            { abbr: 'CFL', full: 'Cloudflare Calls', desc: 'Kräver skydd mot obegränsad egress.' }
+        ]
+    },
     'MODULE_CRITICAL_GOTCHAS': {
         title: 'Kritiska Gotchas & Akustik (Modul 98)',
         description: 'Skyddsnätet: Fysiska och tekniska lagar som aldrig får brytas.',

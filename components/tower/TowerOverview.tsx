@@ -65,6 +65,9 @@ import HardwareProfiles from './knowledge/56_HardwareProfiles';
 import LongDurationMemory from './knowledge/57_LongDurationMemory';
 import PhysicalAudioScenarios from './knowledge/58_PhysicalAudioScenarios';
 import RolesVsHardwareModes from './knowledge/59_RolesVsHardwareModes';
+import Module93MultiTenantByokUX from './knowledge/93_MultiTenantByok_UX';
+import Module94BffSecurityNetlify from './knowledge/94_BffSecurity_Netlify';
+import Module95SfuAdapterMunging from './knowledge/95_SfuAdapter_Munging';
 import ZoomAudioMasterguide from './knowledge/97_ZoomAudioMasterguide';
 import CriticalGotchasAndAcoustics from './knowledge/98_CriticalGotchasAndAcoustics';
 import FutureVisions from './knowledge/99_FutureVisions';
@@ -162,6 +165,9 @@ const TowerOverview: React.FC<TowerOverviewProps> = ({ onClose, highlightedId })
                 <LongDurationMemory />
                 <PhysicalAudioScenarios />
                 <RolesVsHardwareModes />
+                <Module93MultiTenantByokUX />
+                <Module94BffSecurityNetlify />
+                <Module95SfuAdapterMunging />
                 <ZoomAudioMasterguide />
                 <CriticalGotchasAndAcoustics />
                 <FutureVisions />
