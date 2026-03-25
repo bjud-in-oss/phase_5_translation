@@ -73,6 +73,24 @@ const AudioRoutingStateMachine: React.FC = () => {
                     </div>
                 </div>
 
+                {/* 4. FLERVÄGSSAMTAL & KLIENT-PUBLICERING */}
+                <div className="space-y-4 pt-4 border-t border-slate-800">
+                    <h4 className="text-yellow-400 font-bold text-xs uppercase tracking-widest border-l-4 border-yellow-500 pl-3">4. Flervägssamtal & Klient-publicering</h4>
+                    
+                    <div className="bg-slate-950 p-4 rounded border border-slate-800">
+                        <ul className="text-[11px] text-slate-300 list-disc pl-4 space-y-3">
+                            <li>
+                                <strong className="text-yellow-300 block mb-1">Lyssnare som Sändare:</strong>
+                                I privata rum måste även vanliga deltagare ('listeners') tillåtas publicera sitt lokala mikrofonljud till SFU:n (Cloudflare/LiveKit/Daily) när de är unmuteade. Detta möjliggör flervägssamtal.
+                            </li>
+                            <li>
+                                <strong className="text-yellow-300 block mb-1">Spårhantering (Kritiskt för Cloudflare):</strong>
+                                För att detta ska fungera när flera pratar samtidigt, måste SFU-adaptrarna uppdateras så att <code>ontrack</code>-eventet använder <code>stream.addTrack(event.track)</code> på den befintliga strömmen, istället för att skriva över den. LiveKit och Daily hanterar detta nästan automatiskt, men det är kritiskt att implementera korrekt för Cloudflare.
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
             </div>
         </section>
     );
