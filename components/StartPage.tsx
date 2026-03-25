@@ -1,17 +1,41 @@
 import React, { useState } from 'react';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '../firebase';
 import ByokWizard from './onboarding/ByokWizard';
 
 const StartPage: React.FC = () => {
   const [roomCode, setRoomCode] = useState('');
   const [showHelp, setShowHelp] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
+  const [isJoining, setIsJoining] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleJoin = (e: React.FormEvent) => {
+  const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (roomCode.trim()) {
+    const code = roomCode.trim().toUpperCase();
+    if (!code) return;
+
+    setIsJoining(true);
+    setError('');
+
+    try {
+      const orgsRef = collection(db, 'organizations');
+      const q = query(orgsRef, where('inviteCode', '==', code));
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        setError('Ogiltig rumskod. Vänligen försök igen.');
+        setIsJoining(false);
+        return;
+      }
+
       const newUrl = new URL(window.location.href);
-      newUrl.searchParams.set('room', roomCode.trim().toUpperCase());
+      newUrl.searchParams.set('room', code);
       window.location.href = newUrl.toString();
+    } catch (err) {
+      console.error('Error validating room code:', err);
+      setError('Ett fel uppstod vid validering av rumskoden.');
+      setIsJoining(false);
     }
   };
 
@@ -46,14 +70,16 @@ const StartPage: React.FC = () => {
               placeholder="Ange din rumskod (ex. UTBY)"
               className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-4 text-center text-xl tracking-widest uppercase text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
               maxLength={10}
+              disabled={isJoining}
             />
           </div>
+          {error && <p className="text-red-400 text-sm text-center">{error}</p>}
           <button 
             type="submit"
-            disabled={!roomCode.trim()}
+            disabled={!roomCode.trim() || isJoining}
             className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-xl font-bold text-lg transition-all shadow-[0_0_20px_rgba(99,102,241,0.3)] disabled:shadow-none"
           >
-            Gå med
+            {isJoining ? 'Ansluter...' : 'Gå med'}
           </button>
         </form>
 

@@ -37,6 +37,10 @@ service cloud.firestore {
              request.resource.data.timestamp is timestamp;
     }
 
+    function isOwner(userId) {
+       return isAuthenticated() && request.auth.uid == userId;
+    }
+
     match /rooms/{roomId}/messages/{messageId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated() && isValidMessage();
@@ -47,6 +51,22 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       allow create, update: if isAuthenticated();
       allow delete: if false;
+    }
+
+    match /organizations/{orgId} {
+      allow read: if true; // StartPage needs to check invite codes
+      allow create, update: if isAuthenticated();
+      allow delete: if false;
+    }
+
+    match /organizations/{orgId}/secrets/{secretId} {
+      allow read: if false; // Only server-side access
+      allow create, update: if isAuthenticated();
+      allow delete: if false;
+    }
+
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
     }
   }
 }

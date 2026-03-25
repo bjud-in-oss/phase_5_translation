@@ -27,6 +27,41 @@
         }
       },
       "required": ["type", "senderId", "senderRole", "timestamp"]
+    },
+    "Organization": {
+      "title": "Organization",
+      "description": "An organization created by an admin.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "inviteCode": { "type": "string" },
+        "sfuPreference": { "type": "string" },
+        "createdAt": { "type": "timestamp" }
+      },
+      "required": ["name", "inviteCode", "sfuPreference", "createdAt"]
+    },
+    "Secret": {
+      "title": "Secret",
+      "description": "API keys for an organization.",
+      "type": "object",
+      "properties": {
+        "geminiKey": { "type": "string" },
+        "sfuKey1": { "type": "string" },
+        "sfuKey2": { "type": "string" }
+      },
+      "required": ["geminiKey", "sfuKey1"]
+    },
+    "User": {
+      "title": "User",
+      "description": "A user in the system.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "orgId": { "type": "string" },
+        "role": { "type": "string" },
+        "status": { "type": "string" }
+      },
+      "required": ["orgId", "role", "status"]
     }
   },
   "firestore": {
@@ -35,6 +70,18 @@
         "$ref": "Message"
       },
       "description": "Messages sent within a specific room."
+    },
+    "organizations/{orgId}": {
+      "schema": { "$ref": "Organization" },
+      "description": "Organizations."
+    },
+    "organizations/{orgId}/secrets/{secretId}": {
+      "schema": { "$ref": "Secret" },
+      "description": "Secrets for an organization."
+    },
+    "users/{userId}": {
+      "schema": { "$ref": "User" },
+      "description": "Users."
     }
   }
 }

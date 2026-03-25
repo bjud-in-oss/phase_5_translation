@@ -1,72 +1,12 @@
 import React, { useState, useMemo } from 'react';
-
-// --- MOCK DATA & COMPONENTS (Från Del 2) ---
+import { ONBOARDING_CARDS } from '../../src/data/OnboardingCards';
+import { OnboardingCard } from '../../src/types/Onboarding';
+import { createOrganization } from '../../src/services/byokService';
+import { signInAnonymously } from 'firebase/auth';
+import { auth } from '../../firebase';
+import { useAppStore } from '../../stores/useAppStore';
 
 type SfuType = 'livekit' | 'daily' | 'cloudflare' | null;
-
-interface OnboardingCard {
-  id: string;
-  title: string;
-  description: string;
-  type: 'intro' | 'sfu_choice' | 'gemini' | 'livekit' | 'daily' | 'cloudflare' | 'keys' | 'outro';
-  imageUrl?: string;
-  magnifier?: { x: number; y: number; size: number; text: string };
-}
-
-const ONBOARDING_CARDS: OnboardingCard[] = [
-  {
-    id: 'intro_1',
-    title: 'Välkommen till BYOK',
-    description: 'För att använda systemet gratis behöver du egna API-nycklar. Vi guidar dig steg för steg.',
-    type: 'intro',
-  },
-  {
-    id: 'sfu_choice',
-    title: 'Välj din SFU-leverantör',
-    description: 'Välj hur du vill hantera ljudströmningen.',
-    type: 'sfu_choice',
-  },
-  {
-    id: 'gemini_1',
-    title: 'Hämta Gemini API-nyckel',
-    description: 'Gå till Google AI Studio och skapa en nyckel.',
-    type: 'gemini',
-    magnifier: { x: 50, y: 50, size: 80, text: 'Klicka på "Get API key"' }
-  },
-  {
-    id: 'livekit_1',
-    title: 'LiveKit Setup',
-    description: 'Skapa ett projekt på LiveKit Cloud. Du får 5000 gratisminuter.',
-    type: 'livekit',
-    magnifier: { x: 80, y: 20, size: 100, text: 'Kopiera API Key & Secret' }
-  },
-  {
-    id: 'daily_1',
-    title: 'Daily.co Setup',
-    description: 'Skapa ett konto på Daily.co för 10000 gratisminuter.',
-    type: 'daily',
-    magnifier: { x: 20, y: 40, size: 90, text: 'Skapa ny API-nyckel' }
-  },
-  {
-    id: 'cloudflare_1',
-    title: 'Cloudflare Calls Setup',
-    description: 'Aktivera Cloudflare Calls. Kräver kreditkort men ger 1TB gratis.',
-    type: 'cloudflare',
-    magnifier: { x: 50, y: 60, size: 120, text: 'Hämta App ID & Secret' }
-  },
-  {
-    id: 'keys_input',
-    title: 'Ange dina nycklar',
-    description: 'Klistra in nycklarna du just skapade.',
-    type: 'keys',
-  },
-  {
-    id: 'outro_1',
-    title: 'Klart!',
-    description: 'Dina nycklar är sparade. Du kan nu skriva ut din QR-kod för lyssnare.',
-    type: 'outro',
-  }
-];
 
 const MagnifierViewer: React.FC<{ card: OnboardingCard }> = ({ card }) => {
   return (
@@ -82,22 +22,52 @@ const MagnifierViewer: React.FC<{ card: OnboardingCard }> = ({ card }) => {
         </div>
       )}
       
-      {card.magnifier && (
-        <div 
-          className="absolute border-2 border-indigo-500 rounded-full bg-indigo-500/20 flex items-center justify-center shadow-[0_0_15px_rgba(99,102,241,0.5)]"
-          style={{
-            left: `${card.magnifier.x}%`,
-            top: `${card.magnifier.y}%`,
-            width: `${card.magnifier.size}px`,
-            height: `${card.magnifier.size}px`,
-            transform: 'translate(-50%, -50%)'
-          }}
-        >
-            <div className="absolute top-full mt-2 bg-indigo-900 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap border border-indigo-500">
-                {card.magnifier.text}
-            </div>
-        </div>
-      )}
+      {card.overlays && card.overlays.map((overlay, index) => (
+        <React.Fragment key={index}>
+          {/* Ring */}
+          <div 
+            className="absolute border-4 border-red-500 rounded-full"
+            style={{
+              left: `${overlay.ringX}%`,
+              top: `${overlay.ringY}%`,
+              width: '40px',
+              height: '40px',
+              transform: 'translate(-50%, -50%)',
+              boxShadow: '0 0 0 9999px rgba(0,0,0,0.6)'
+            }}
+          />
+          {/* Magnifier */}
+          <div 
+            className="absolute border-2 border-indigo-500 rounded-full bg-indigo-500/20 flex items-center justify-center shadow-[0_0_15px_rgba(99,102,241,0.5)] overflow-hidden"
+            style={{
+              left: `${overlay.magX}%`,
+              top: `${overlay.magY}%`,
+              width: '100px',
+              height: '100px',
+              transform: 'translate(-50%, -50%)'
+            }}
+          >
+            {card.imageUrl && (
+              <img 
+                src={card.imageUrl} 
+                alt="Zoom" 
+                className="absolute max-w-none"
+                style={{
+                  width: `${100 * overlay.zoom}%`,
+                  height: `${100 * overlay.zoom}%`,
+                  left: `${-overlay.ringX * overlay.zoom + 50}%`,
+                  top: `${-overlay.ringY * overlay.zoom + 50}%`,
+                }}
+              />
+            )}
+            {overlay.text && (
+              <div className="absolute bottom-2 bg-indigo-900/90 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap border border-indigo-500 z-10">
+                  {overlay.text}
+              </div>
+            )}
+          </div>
+        </React.Fragment>
+      ))}
     </div>
   );
 };
@@ -113,15 +83,48 @@ const ByokWizard: React.FC = () => {
   const [sfuKey1, setSfuKey1] = useState('');
   const [sfuKey2, setSfuKey2] = useState('');
   const [isSaved, setIsSaved] = useState(false);
+  const [inviteCode, setInviteCode] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const setUserRole = useAppStore(state => state.setUserRole);
+  const setRoomId = useAppStore(state => state.setRoomId);
 
   // Filter cards based on selected SFU
   const filteredCards = useMemo(() => {
-    return ONBOARDING_CARDS.filter(card => {
-      if (card.type === 'intro' || card.type === 'sfu_choice' || card.type === 'gemini' || card.type === 'keys' || card.type === 'outro') {
-        return true;
-      }
-      return card.type === selectedSfu;
+    const cards: OnboardingCard[] = [];
+    
+    // Add intro cards
+    cards.push(...ONBOARDING_CARDS.filter(c => c.provider === 'intro'));
+    
+    // Add SFU choice step
+    cards.push({
+      id: 'sfu_choice',
+      provider: 'sfu_choice',
+      title: 'Välj din SFU-leverantör',
+      description: 'Välj hur du vill hantera ljudströmningen.',
     });
+
+    // Add Gemini cards
+    cards.push(...ONBOARDING_CARDS.filter(c => c.provider === 'gemini'));
+
+    // Add selected SFU cards
+    if (selectedSfu) {
+      cards.push(...ONBOARDING_CARDS.filter(c => c.provider === selectedSfu));
+    }
+
+    // Add Keys input step
+    cards.push({
+      id: 'keys_input',
+      provider: 'keys',
+      title: 'Ange dina nycklar',
+      description: 'Klistra in nycklarna du just skapade.',
+    });
+
+    // Add outro cards
+    cards.push(...ONBOARDING_CARDS.filter(c => c.provider === 'outro'));
+
+    return cards;
   }, [selectedSfu]);
 
   const currentCard = filteredCards[currentStep];
@@ -138,10 +141,34 @@ const ByokWizard: React.FC = () => {
     }
   };
 
-  const handleSave = () => {
-    // Simulate save
-    setIsSaved(true);
-    handleNext();
+  const handleSave = async () => {
+    setIsSaving(true);
+    setError('');
+    try {
+      // 1. Sign in anonymously (MVP)
+      await signInAnonymously(auth);
+
+      // 2. Create organization and save keys
+      const code = await createOrganization(
+        'Min Församling', // Default name for now
+        selectedSfu || 'livekit',
+        {
+          geminiKey,
+          sfuKey1,
+          sfuKey2,
+        }
+      );
+
+      setInviteCode(code);
+      setUserRole('admin');
+      setIsSaved(true);
+      handleNext();
+    } catch (err: any) {
+      console.error('Error saving organization:', err);
+      setError(err.message || 'Ett fel uppstod när organisationen skulle sparas.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const renderSfuChoice = () => (
@@ -265,6 +292,7 @@ const ByokWizard: React.FC = () => {
           </div>
         </>
       )}
+      {error && <div className="text-red-500 text-sm mt-2">{error}</div>}
     </div>
   );
 
@@ -293,15 +321,15 @@ const ByokWizard: React.FC = () => {
           <p className="text-sm text-slate-300">{currentCard.description}</p>
         </div>
 
-        {currentCard.type !== 'sfu_choice' && currentCard.type !== 'keys' && currentCard.type !== 'outro' && (
+        {currentCard.provider !== 'sfu_choice' && currentCard.provider !== 'keys' && currentCard.provider !== 'outro' && (
           <MagnifierViewer card={currentCard} />
         )}
 
-        {currentCard.type === 'sfu_choice' && renderSfuChoice()}
+        {currentCard.provider === 'sfu_choice' && renderSfuChoice()}
         
-        {currentCard.type === 'keys' && renderKeyInputs()}
+        {currentCard.provider === 'keys' && renderKeyInputs()}
 
-        {currentCard.type === 'outro' && (
+        {currentCard.provider === 'outro' && (
           <div className="bg-emerald-900/20 border border-emerald-500/30 rounded-xl p-6 text-center">
             <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg className="w-8 h-8 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -312,6 +340,10 @@ const ByokWizard: React.FC = () => {
             <p className="text-sm text-slate-300 mb-6">
               Din organisation är nu redo. Skriv ut QR-koden nedan och sätt upp den i lokalen så att lyssnare kan ansluta.
             </p>
+            <div className="mb-6">
+              <p className="text-xs text-slate-400 mb-1">Din rumskod:</p>
+              <div className="text-3xl font-mono font-bold text-white tracking-widest">{inviteCode}</div>
+            </div>
             <button className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg text-sm transition-colors border border-slate-600 flex items-center gap-2 mx-auto">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
@@ -332,25 +364,31 @@ const ByokWizard: React.FC = () => {
           Föregående
         </button>
 
-        {currentCard.type === 'keys' ? (
+        {currentCard.provider === 'keys' ? (
           <button
             onClick={handleSave}
-            disabled={!geminiKey || !sfuKey1 || (selectedSfu !== 'daily' && !sfuKey2)}
+            disabled={!geminiKey || !sfuKey1 || (selectedSfu !== 'daily' && !sfuKey2) || isSaving}
             className="px-6 py-2 rounded-lg text-sm font-bold bg-emerald-600 hover:bg-emerald-500 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-[0_0_15px_rgba(16,185,129,0.3)]"
           >
-            Spara Nycklar
+            {isSaving ? 'Sparar...' : 'Spara Nycklar'}
           </button>
-        ) : currentCard.type === 'outro' ? (
+        ) : currentCard.provider === 'outro' ? (
           <button
-            onClick={() => { /* Close wizard */ }}
+            onClick={() => { 
+              const newUrl = new URL(window.location.href);
+              newUrl.searchParams.set('room', inviteCode);
+              newUrl.searchParams.set('role', 'admin');
+              window.history.pushState({}, '', newUrl.toString());
+              setRoomId(inviteCode);
+            }}
             className="px-6 py-2 rounded-lg text-sm font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition-colors shadow-[0_0_15px_rgba(99,102,241,0.3)]"
           >
-            Stäng
+            Gå till rummet
           </button>
         ) : (
           <button
             onClick={handleNext}
-            disabled={currentCard.type === 'sfu_choice' && !selectedSfu}
+            disabled={currentCard.provider === 'sfu_choice' && !selectedSfu}
             className="px-6 py-2 rounded-lg text-sm font-bold bg-indigo-600 hover:bg-indigo-500 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-[0_0_15px_rgba(99,102,241,0.3)]"
           >
             Nästa
