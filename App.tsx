@@ -13,6 +13,7 @@ import ControlBar from './components/ControlBar';
 import Tower from './components/Tower';
 import SystemPromptModal from './components/SystemPromptModal'; 
 import PinCodeModal from './components/PinCodeModal';
+import StartPage from './components/StartPage';
 import { AudioGroup } from './types';
 import { useAppStore, UserRole } from './stores/useAppStore';
 
@@ -567,12 +568,8 @@ const App: React.FC = () => {
 
     if (roomParam) {
       setRoomId(roomParam);
-    } else if (!roomState.roomId) {
-      setRoomId('Stora salen');
-      // Update URL silently
-      const newUrl = new URL(window.location.href);
-      newUrl.searchParams.set('room', 'Stora salen');
-      window.history.replaceState({}, '', newUrl.toString());
+    } else {
+      setRoomId(null);
     }
 
     if (roleParam === 'admin' || roleParam === 'teacher') {
@@ -603,6 +600,10 @@ const App: React.FC = () => {
         onCancel={() => { setUserRole('listener'); setPendingRole(null); }} 
       />
     );
+  }
+
+  if (!roomState.roomId) {
+    return <StartPage />;
   }
 
   return <RoomSession key={roomState.roomId} />;
