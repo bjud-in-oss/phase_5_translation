@@ -76,6 +76,26 @@ const Phase6BYOKSecurity: React.FC = () => {
                     </div>
                 </div>
 
+                {/* 6. MILJÖVARIABLER & FIREBASE CONFIG */}
+                <div className="space-y-4 pt-4 border-t border-slate-800">
+                    <h4 className="text-pink-400 font-bold text-xs uppercase tracking-widest border-l-4 border-pink-500 pl-3">6. Miljövariabler & Firebase Config</h4>
+                    <div className="bg-slate-950 p-4 rounded border border-slate-800 space-y-3">
+                        <p className="text-[11px] text-slate-300">
+                            Även om Firebase API-nycklar är publika och måste skickas till klienten, får de aldrig checkas in i Git (t.ex. via en <code>firebase-config.json</code>). Detta beror på tre saker:
+                        </p>
+                        <ul className="text-[11px] text-slate-400 list-disc pl-4 space-y-2">
+                            <li><strong className="text-pink-300">Delade Cloud-rättigheter:</strong> Nyckeln kan ibland ge tillgång till underliggande Google Cloud-tjänster (som Gemini API) om de delar samma projekt.</li>
+                            <li><strong className="text-pink-300">Quota Snyltning:</strong> Vem som helst kan ta nyckeln från GitHub och köra trafik mot din databas lokalt.</li>
+                            <li><strong className="text-pink-300">GitHub Scanners:</strong> GitHub flaggar automatiskt filer med <code>AIzaSy...</code> som läckor.</li>
+                        </ul>
+                        <div className="mt-3 p-2 bg-pink-900/20 border border-pink-500/30 rounded">
+                            <p className="text-[11px] text-pink-200">
+                                Lösningen är att använda Vite's <code>.env</code>-filer (<code>VITE_FIREBASE_API_KEY</code>) och bygga in variablerna under CI/CD-processen.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </section>
     );
