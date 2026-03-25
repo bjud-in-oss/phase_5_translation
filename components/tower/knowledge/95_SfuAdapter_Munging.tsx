@@ -38,6 +38,18 @@ const Module95SfuAdapterMunging: React.FC = () => {
                     </div>
                 </div>
 
+                <div className="space-y-4">
+                    <h4 className="text-red-400 font-bold text-xs uppercase tracking-widest border-l-4 border-red-500 pl-3">WebRTC Garbage Collection (Memory Leak Prevention)</h4>
+                    <div className="bg-red-900/20 p-4 rounded border border-red-500/30">
+                        <p className="text-xs text-red-200 leading-relaxed">
+                            Ett kritiskt arkitektoniskt krav är korrekt hantering av WebRTC-livscykeln i React. Om anslutningar inte stängs ordentligt kraschar webbläsaren med felet <code>Cannot create so many PeerConnections</code> efter ca 500 re-renders (vanligt vid Hot Reloads eller rumsbyten).
+                        </p>
+                        <p className="text-xs text-red-200 leading-relaxed mt-2">
+                            <strong>Åtgärd:</strong> Reacts <code>useEffect</code>-cleanup måste <strong>alltid</strong> anropa <code>peerConnection.close()</code> och nollställa alla referenser. Detta förhindrar port-exhaustion och minnesläckor.
+                        </p>
+                    </div>
+                </div>
+
             </div>
         </section>
     );

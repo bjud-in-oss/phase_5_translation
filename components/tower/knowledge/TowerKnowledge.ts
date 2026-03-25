@@ -44,12 +44,30 @@ export const MODULE_DOCS: Record<string, ModuleDoc> = {
         ]
     },
     'MODULE_PHASE_5': {
-        title: 'Phase 5: SFU & Cloud (Modul 05)',
-        description: 'Kravspecifikation för molnbaserad ljuddistribution via Cloudflare Serverless SFU.',
+        title: 'Phase 5: SFU Agnosticism (Modul 05)',
+        description: 'Kravspecifikation för SFU Adapter Pattern (LiveKit, Daily, Cloudflare).',
         params: [
-            { abbr: 'PUB', full: 'Publishing', desc: 'Admin publicerar radiomixen till molnet.' },
-            { abbr: 'SUB', full: 'Subscribing', desc: 'Lyssnare tar emot ljud utan lokal AI-koppling.' },
-            { abbr: 'TOK', full: 'Session Tokens', desc: 'Säker autentisering via Edge Functions.' }
+            { abbr: 'LVK', full: 'LiveKit', desc: 'Rekommenderad. 10k min/mån gratis.' },
+            { abbr: 'DLY', full: 'Daily.co', desc: 'Fallback. 10k min/mån gratis.' },
+            { abbr: 'CFL', full: 'Cloudflare', desc: 'Power Users. Kräver SDP Munging.' }
+        ]
+    },
+    'MODULE_PHASE_6': {
+        title: 'Phase 6: BYOK & Security (Modul 06)',
+        description: 'Multi-Tenant SaaS, Netlify BFF och Föreningsdemokrati.',
+        params: [
+            { abbr: 'BFF', full: 'Netlify BFF', desc: 'Dörrvakt som döljer API-nycklar.' },
+            { abbr: 'BYO', full: 'Hjälp till', desc: 'Godkännande-loop för nya Leaders.' },
+            { abbr: 'PDF', full: 'QR-Utskrift', desc: 'A4-PDF med lyssnar-QR och Gruppkod.' }
+        ]
+    },
+    'MODULE_DATABASE_SCHEMA': {
+        title: 'Database Schema (Modul 07)',
+        description: 'Firestore-datamodell för Multi-Tenant BYOK.',
+        params: [
+            { abbr: 'ORG', full: 'Organizations', desc: 'Innehåller offentlig inviteCode.' },
+            { abbr: 'SEC', full: 'Secrets', desc: 'Låst sub-collection för API-nycklar.' },
+            { abbr: 'USR', full: 'Users', desc: 'Status: pending förhindrar obehöriga rum.' }
         ]
     },
     'MODULE_NETWORK': NETWORK_DOC,
@@ -184,6 +202,24 @@ export const MODULE_DOCS: Record<string, ModuleDoc> = {
             { abbr: 'AEC', full: 'Dubbel AEC', desc: 'Mjukvaru- och hårdvaru-AEC får aldrig köras samtidigt.' },
             { abbr: 'REF', full: 'AEC Ref', desc: 'Allt takljud måste routas till Tesirans AEC Ref.' },
             { abbr: 'CPU', full: 'Tråd-svält', desc: 'UI-lagg kan orsaka ljudsprak. Framtid: AudioWorklet.' }
+        ]
+    },
+    'MODULE_CRITICAL_GOTCHAS_LESSONS': {
+        title: 'Kritiska Gotchas & Lärdomar (Modul 96)',
+        description: 'Våra viktigaste tekniska "blodiga läxor" kring React, Firebase, WebRTC och infrastruktur.',
+        params: [
+            { abbr: 'KEY', full: 'React Key', desc: 'Styr komponentens identitet, inte bara listor.' },
+            { abbr: 'PLY', full: 'Autoplay', desc: 'Kräv användarinteraktion innan WebRTC startar.' },
+            { abbr: 'RDB', full: 'Realtime DB', desc: '10-20x snabbare än Firestore för signallering.' }
+        ]
+    },
+    'MODULE_INTERACTIVE_ONBOARDING': {
+        title: 'Interactive Onboarding Engine (Modul 97)',
+        description: 'CSS-driven motor för dynamiska onboarding-guider utan statiska bilder.',
+        params: [
+            { abbr: 'VIW', full: 'MagnifierViewer', desc: 'Ritar ringar och förstoringsglas med ren CSS.' },
+            { abbr: 'EDT', full: 'MagnifierEditor', desc: 'Drag-and-drop-verktyg för att skapa JSON-förslag.' },
+            { abbr: 'JSN', full: 'JSON Data', desc: 'Styr position, storlek och zoom-nivå.' }
         ]
     },
     'MODULE_FUTURE_VISIONS': {

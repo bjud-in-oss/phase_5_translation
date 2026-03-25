@@ -6,6 +6,8 @@ import Phase2AILogic from './knowledge/02_Phase2_AILogic';
 import Phase3AudioEngine from './knowledge/03_Phase3_AudioEngine';
 import Phase4UX from './knowledge/04_Phase4_UX';
 import Phase5SFU from './knowledge/05_Phase5_SFU';
+import Phase6BYOKSecurity from './knowledge/06_Phase6_BYOK_Security';
+import DatabaseSchema from './knowledge/07_Database_Schema';
 import OverviewPurpose from './knowledge/01_OverviewPurpose';
 import OverviewProblems from './knowledge/02_OverviewProblems';
 import OverviewArchitecture from './knowledge/03_OverviewArchitecture';
@@ -68,6 +70,8 @@ import RolesVsHardwareModes from './knowledge/59_RolesVsHardwareModes';
 import Module93MultiTenantByokUX from './knowledge/93_MultiTenantByok_UX';
 import Module94BffSecurityNetlify from './knowledge/94_BffSecurity_Netlify';
 import Module95SfuAdapterMunging from './knowledge/95_SfuAdapter_Munging';
+import Module96CriticalGotchas from './knowledge/96_CriticalGotchas';
+import InteractiveOnboardingEngine from './knowledge/97_InteractiveOnboardingEngine';
 import ZoomAudioMasterguide from './knowledge/97_ZoomAudioMasterguide';
 import CriticalGotchasAndAcoustics from './knowledge/98_CriticalGotchasAndAcoustics';
 import FutureVisions from './knowledge/99_FutureVisions';
@@ -88,6 +92,8 @@ const TowerOverview: React.FC<TowerOverviewProps> = ({ onClose, highlightedId })
                 <Phase3AudioEngine />
                 <Phase4UX />
                 <Phase5SFU />
+                <Phase6BYOKSecurity />
+                <DatabaseSchema />
                 <OverviewPurpose />
                 <OverviewProblems />
                 <OverviewArchitecture />
@@ -168,6 +174,8 @@ const TowerOverview: React.FC<TowerOverviewProps> = ({ onClose, highlightedId })
                 <Module93MultiTenantByokUX />
                 <Module94BffSecurityNetlify />
                 <Module95SfuAdapterMunging />
+                <Module96CriticalGotchas />
+                <InteractiveOnboardingEngine />
                 <ZoomAudioMasterguide />
                 <CriticalGotchasAndAcoustics />
                 <FutureVisions />

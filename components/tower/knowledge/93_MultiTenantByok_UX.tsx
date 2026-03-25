@@ -27,11 +27,25 @@ const Module93MultiTenantByokUX: React.FC = () => {
                 </div>
 
                 <div className="space-y-4">
-                    <h4 className="text-orange-400 font-bold text-xs uppercase tracking-widest border-l-4 border-orange-500 pl-3">Väntrums-logiken (Kostnadsskydd)</h4>
+                    <h4 className="text-orange-400 font-bold text-xs uppercase tracking-widest border-l-4 border-orange-500 pl-3">Rumstyper & Väntrums-logik (Kostnadsskydd)</h4>
                     <div className="bg-orange-900/20 p-4 rounded border border-orange-500/30">
-                        <p className="text-xs text-orange-200 leading-relaxed">
-                            För att förhindra att obehöriga eller besökare startar AI:n och drar kostnader: Om en Visitor surfar till möteslänken innan en Leader har startat rummet, placeras de i ett <strong>"Väntrum"</strong> (en låst UI-vy). WebRTC-anslutningen och Gemini-anropen förblir blockerade tills en verifierad Leader träder in i rummet och låser upp sessionen.
+                        <p className="text-xs text-orange-200 leading-relaxed mb-3">
+                            För att balansera användarvänlighet med budgetskydd kan en Leader skapa två typer av rum:
                         </p>
+                        <ul className="space-y-4">
+                            <li>
+                                <strong className="text-orange-300 text-xs">1. Värdstyrda rum (Standard):</strong>
+                                <p className="text-xs text-orange-200/80 mt-1">
+                                    Om en Visitor surfar till möteslänken innan en Leader har startat rummet, placeras de i ett <strong>"Väntrum"</strong> (en låst UI-vy). WebRTC-anslutningen och Gemini-anropen förblir blockerade tills en verifierad Leader träder in i rummet och låser upp sessionen.
+                                </p>
+                            </li>
+                            <li>
+                                <strong className="text-orange-300 text-xs">2. Auto-Start rum ("Join before host"):</strong>
+                                <p className="text-xs text-orange-200/80 mt-1">
+                                    Ljudmotorn och AI:n startar omedelbart när den första personen klickar på länken (inget väntrum). För att skydda BYOK-budgeten <strong>MÅSTE</strong> dessa rum ha en hård tidsgräns (t.ex. 45 eller 60 minuter) som sätts av Leadern vid skapandet. När tiden löper ut klipper Netlify-dörrvakten anslutningen automatiskt. Detta maximerar friktionen för vanliga användare vid obehörig användning.
+                                </p>
+                            </li>
+                        </ul>
                     </div>
                 </div>
 

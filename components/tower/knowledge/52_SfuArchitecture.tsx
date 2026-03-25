@@ -45,10 +45,10 @@ const SfuArchitecture: React.FC = () => {
                     
                     <div className="space-y-3">
                         <p className="text-xs text-slate-400 leading-relaxed">
-                            I en traditionell P2P-lösning (Unicast) måste sändaren ladda upp en separat ljudström för varje lyssnare. Med 50 lyssnare kraschar sändarens uppkoppling.
+                            I en traditionell P2P-lösning (Unicast) måste sändaren ladda upp en separat ljudström för varje lyssnare. Med 50 lyssnare kraschar sändarens uppkoppling direkt på grund av bandbredds- och CPU-brist.
                         </p>
                         <p className="text-xs text-slate-400 leading-relaxed">
-                            Med en SFU använder vi en <strong>Publish/Subscribe</strong>-modell inuti virtuella "Rum".
+                            Lösningen är en SFU med <strong>Publish/Subscribe</strong>-modell. Appen publicerar endast <strong>1 Audio Track</strong> till det virtuella rummet i molnet. SFU:n tar sedan den tunga uppgiften att kopiera och skicka ut strömmen till alla 50 prenumeranter.
                         </p>
                     </div>
 
@@ -79,7 +79,7 @@ const SfuArchitecture: React.FC = () => {
                         {/* Subscribers */}
                         <div className="flex flex-col items-center mt-4">
                             <div className="w-0.5 h-6 bg-slate-600"></div>
-                            <div className="text-[10px] text-slate-400 mb-2">50x Nedladdningar (Molnet betalar bandbredden)</div>
+                            <div className="text-[10px] text-slate-400 mb-2">50x Nedladdningar (SFU:n gör jobbet)</div>
                             <div className="flex flex-wrap justify-center gap-2">
                                 <div className="bg-green-900/20 text-green-400 p-2 rounded border border-green-500/30 text-[10px]">Lyssnare 1</div>
                                 <div className="bg-green-900/20 text-green-400 p-2 rounded border border-green-500/30 text-[10px]">Lyssnare 2</div>
