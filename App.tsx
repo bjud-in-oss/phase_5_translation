@@ -15,6 +15,7 @@ import SystemPromptModal from './components/SystemPromptModal';
 import PinCodeModal from './components/PinCodeModal';
 import StartPage from './components/StartPage';
 import { AudioGroup } from './types';
+import MagnifierEditor from './components/onboarding/MagnifierEditor';
 import { useAppStore, UserRole } from './stores/useAppStore';
 
 const ALL_LANGUAGES = [
@@ -590,6 +591,11 @@ const App: React.FC = () => {
         </div>
       </div>
     );
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('mode') === 'editor') {
+    return <MagnifierEditor />;
   }
 
   if (pendingRole) {
