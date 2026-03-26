@@ -1,190 +1,38 @@
 import { OnboardingCard } from '../types/Onboarding';
 
 export const ONBOARDING_CARDS: OnboardingCard[] = [
-  {
-    id: 'intro-1', provider: 'intro',
-    title: 'Välkommen!',
-    description: 'Hej och varmt välkommen! Vad fantastiskt att du hjälper din församling att komma igång med AI-tolkning. Vår app är helt gratis att använda för er tack vare något som kallas BYOK (Bring Your Own Key). Det betyder helt enkelt att du hämtar dina egna "digitala lösenord" från de tjänster vi använder.',
-    imageUrl: 'https://github.com/user-attachments/assets/b84dfbcf-47a5-4d97-a1bd-5876aae6d4d5'
-  },
-  {
-    id: 'intro-2', provider: 'intro',
-    title: 'Så läser du bilderna',
-    description: 'Internet kan vara rörigt. I den här guiden har vi suddat ut allt du inte behöver bry dig om. Följ den röda linsen: Leta bara efter den röda ringen. Läs i förstoringsglaset: Vi har zoomat in det viktiga åt dig. Ignorera resten: Allt annat är bara bakgrund.',
-    imageUrl: 'https://github.com/user-attachments/assets/e5cf2ea5-488f-4d71-9953-7c83fe8ea8c6',
-    overlays: [{ ringX: 50, ringY: 50, magX: 75, magY: 50, zoom: 3, text: 'Klicka Här' }]
-  },
-  {
-    id: 'intro-3', provider: 'intro',
-    title: 'Ditt AI-lösenord',
-    description: 'Del 1: Din AI-Nyckel. Vi börjar med att hämta "hjärnan" i systemet från Google Gemini.',
-    imageUrl: 'https://github.com/user-attachments/assets/fe7070a5-37cd-4625-94a0-48bec8441ace'
-  },
-  {
-    id: 'gemini-1', provider: 'gemini',
-    title: 'Hitta menyn',
-    description: 'Öppna Google AI Studio via knappen nedan. Titta i menyn nere till vänster på skärmen och klicka på "Get API key".',
-    imageUrl: 'https://github.com/user-attachments/assets/3afdd79f-9520-4819-ac91-d5bb86ff1be1',
-    overlays: [{ ringX: 12, ringY: 85, magX: 35, magY: 70, zoom: 3, text: 'Get API key' }]
-  },
-  {
-    id: 'gemini-2', provider: 'gemini',
-    title: 'Skapa knappen',
-    description: 'Klicka sedan på den grå knappen "Create API key" uppe till höger.',
-    imageUrl: 'https://github.com/user-attachments/assets/1c9fd3bd-1e00-4276-b2f4-a47d173dc55d',
-    overlays: [{ ringX: 85, ringY: 15, magX: 65, magY: 35, zoom: 3, text: 'Create API key' }]
-  },
-  {
-    id: 'gemini-3', provider: 'gemini',
-    title: 'Nytt projekt',
-    description: 'Välj att skapa en ny nyckel i ett nytt projekt i rutan som dyker upp.',
-    imageUrl: 'https://github.com/user-attachments/assets/47f3fd65-71d2-4c96-9dc8-76a64c99020c',
-    overlays: [{ ringX: 50, ringY: 50, magX: 75, magY: 50, zoom: 3, text: 'Create project' }]
-  },
-  {
-    id: 'gemini-4', provider: 'gemini',
-    title: 'Kopiera nyckeln',
-    description: 'Klicka på den lilla ikonen som ser ut som två papper för att kopiera din färdiga nyckel.',
-    imageUrl: 'https://github.com/user-attachments/assets/084aea68-36ce-4847-addb-e2d540b9a020',
-    overlays: [{ ringX: 75, ringY: 45, magX: 50, magY: 70, zoom: 4, text: 'Kopiera' }]
-  },
-  {
-    id: 'livekit-1', provider: 'livekit',
-    title: 'LiveKit Start',
-    description: 'Logga in med Google.',
-    imageUrl: 'https://github.com/user-attachments/assets/693f1605-bf43-4310-81be-01a471efc433',
-    overlays: [{ ringX: 30, ringY: 50, magX: 60, magY: 50, zoom: 3 }]
-  },
-  {
-    id: 'livekit-2', provider: 'livekit',
-    title: 'LiveKit Fortsätt',
-    description: 'Klicka på den blå knappen för att fortsätta.',
-    imageUrl: 'https://github.com/user-attachments/assets/82be7e28-d63d-4c92-a431-d857acfc1b67',
-    overlays: [{ ringX: 50, ringY: 50, magX: 75, magY: 50, zoom: 3 }]
-  },
-  {
-    id: 'livekit-3', provider: 'livekit',
-    title: 'LiveKit Hoppa över',
-    description: 'Klicka på "Skip for now" längst ner.',
-    imageUrl: 'https://github.com/user-attachments/assets/2c0b248b-5b6b-4136-9de2-a4fbbf650b77',
-    overlays: [{ ringX: 50, ringY: 90, magX: 50, magY: 60, zoom: 3 }]
-  },
-  {
-    id: 'livekit-4', provider: 'livekit',
-    title: 'LiveKit Inställningar',
-    description: 'Gå till "Settings" och sedan "API keys" i menyn till vänster.',
-    imageUrl: 'https://github.com/user-attachments/assets/ba08f099-6e03-4cd9-9e26-b5ae1802966a',
-    overlays: [{ ringX: 10, ringY: 60, magX: 35, magY: 50, zoom: 3 }]
-  },
-  {
-    id: 'livekit-5', provider: 'livekit',
-    title: 'LiveKit Nyckelrad',
-    description: 'Klicka på raden där din nyckel står.',
-    imageUrl: 'https://github.com/user-attachments/assets/af9550c7-0f26-4ff3-b584-096f8ac5993a',
-    overlays: [{ ringX: 50, ringY: 50, magX: 50, magY: 20, zoom: 3 }]
-  },
-  {
-    id: 'livekit-6', provider: 'livekit',
-    title: 'LiveKit Kopiera',
-    description: 'Kopiera både "WebSocket URL" och "API key" med de små ikonerna.',
-    imageUrl: 'https://github.com/user-attachments/assets/d38efc60-e190-4d3c-8c43-90ae8066255e',
-    overlays: [{ ringX: 70, ringY: 50, magX: 40, magY: 50, zoom: 3 }]
-  },
-  {
-    id: 'daily-1', provider: 'daily',
-    title: 'Daily Registrering',
-    description: 'Klicka på den lilla textlänken "Sign up" längst ner.',
-    imageUrl: 'https://github.com/user-attachments/assets/71f62a2f-c1b9-4de8-9163-971a6765d05b',
-    overlays: [{ ringX: 50, ringY: 85, magX: 50, magY: 50, zoom: 4 }]
-  },
-  {
-    id: 'daily-2', provider: 'daily',
-    title: 'Daily Skapa',
-    description: 'Fyll i uppgifter och klicka på gröna "Sign up".',
-    imageUrl: 'https://github.com/user-attachments/assets/192c893e-901a-470f-ab24-918e1be5e7f4',
-    overlays: [{ ringX: 50, ringY: 75, magX: 50, magY: 45, zoom: 3 }]
-  },
-  {
-    id: 'daily-3', provider: 'daily',
-    title: 'Daily Domän',
-    description: 'Skriv in en valfri adress (subdomän).',
-    imageUrl: 'https://github.com/user-attachments/assets/79775d18-6a7d-4900-b797-3670cdd7c721',
-    overlays: [{ ringX: 45, ringY: 40, magX: 75, magY: 50, zoom: 3 }]
-  },
-  {
-    id: 'daily-4', provider: 'daily',
-    title: 'Daily Dashboard',
-    description: 'Klicka på "Open dashboard".',
-    imageUrl: 'https://github.com/user-attachments/assets/5fb1b3c6-ed30-476d-bd4c-1f63b788e6f0',
-    overlays: [{ ringX: 40, ringY: 50, magX: 70, magY: 50, zoom: 3 }]
-  },
-  {
-    id: 'daily-5', provider: 'daily',
-    title: 'Daily Betalkort',
-    description: 'Välj "Discard" när systemet frågar efter kortuppgifter.',
-    imageUrl: 'https://github.com/user-attachments/assets/a9191a79-ea85-4a40-91b6-fd077276bc4f',
-    overlays: [{ ringX: 55, ringY: 45, magX: 75, magY: 65, zoom: 3 }]
-  },
-  {
-    id: 'daily-6', provider: 'daily',
-    title: 'Daily Developers',
-    description: 'Klicka på "Developers" i vänstermenyn.',
-    imageUrl: 'https://github.com/user-attachments/assets/f3938dc1-7ab1-4fb8-b2a2-182c29ed2aaf',
-    overlays: [{ ringX: 10, ringY: 60, magX: 35, magY: 60, zoom: 3 }]
-  },
-  {
-    id: 'daily-7', provider: 'daily',
-    title: 'Daily Kopiera',
-    description: 'Klicka på de tre prickarna och välj "Copy key to clipboard".',
-    imageUrl: 'https://github.com/user-attachments/assets/dd0899c2-a0f2-4c6b-83c7-5d9404a5e88b',
-    overlays: [{ ringX: 90, ringY: 45, magX: 60, magY: 60, zoom: 3 }]
-  },
-  {
-    id: 'cloudflare-1', provider: 'cloudflare',
-    title: 'Cloudflare Start',
-    description: 'Klicka på "Start for free" nere till vänster.',
-    imageUrl: 'https://github.com/user-attachments/assets/4788a289-bdec-46ad-a05a-6417b7d8ea0f',
-    overlays: [{ ringX: 30, ringY: 70, magX: 60, magY: 50, zoom: 3 }]
-  },
-  {
-    id: 'cloudflare-2', provider: 'cloudflare',
-    title: 'Cloudflare Konto',
-    description: 'Fyll i Email och Password.',
-    imageUrl: 'https://github.com/user-attachments/assets/d92da951-edb5-44e8-a43a-0aecc1d61423',
-    overlays: [{ ringX: 50, ringY: 40, magX: 75, magY: 40, zoom: 3 }]
-  },
-  {
-    id: 'cloudflare-3', provider: 'cloudflare',
-    title: 'Cloudflare Meny',
-    description: 'Leta upp "Serverless SFU" i vänstermenyn.',
-    imageUrl: 'https://github.com/user-attachments/assets/468e41f4-8ffd-4b0b-be4e-ad0743de503f',
-    overlays: [{ ringX: 15, ringY: 75, magX: 40, magY: 70, zoom: 3 }]
-  },
-  {
-    id: 'cloudflare-4', provider: 'cloudflare',
-    title: 'Cloudflare Skapa 1',
-    description: 'Klicka på "Create".',
-    imageUrl: 'https://github.com/user-attachments/assets/5c9ea6da-b3ea-434f-8ca4-d9527781c2a6',
-    overlays: [{ ringX: 60, ringY: 60, magX: 30, magY: 60, zoom: 3 }]
-  },
-  {
-    id: 'cloudflare-5', provider: 'cloudflare',
-    title: 'Cloudflare Skapa 2',
-    description: 'Döp din applikation till "kyrka" och klicka "Create".',
-    imageUrl: 'https://github.com/user-attachments/assets/b7918972-5963-44b0-b2f4-971395e3184a',
-    overlays: [{ ringX: 50, ringY: 50, magX: 25, magY: 50, zoom: 3 }]
-  },
-  {
-    id: 'cloudflare-6', provider: 'cloudflare',
-    title: 'Cloudflare Kopiera',
-    description: 'Kopiera BÅDE ditt "App ID" och din "API Token" med ikonerna.',
-    imageUrl: 'https://github.com/user-attachments/assets/177aa3ca-9a51-444e-a754-49d9b6770d7e',
-    overlays: [{ ringX: 70, ringY: 65, magX: 40, magY: 65, zoom: 3 }]
-  },
-  {
-    id: 'outro-1', provider: 'outro',
-    title: 'Redo att tolka!',
-    description: 'Bra jobbat! Du har nu framgångsrikt hämtat de digitala lösenorden till både AI-hjärnan och ljudservern.',
-    imageUrl: 'https://github.com/user-attachments/assets/eb5c7d15-c20e-40e8-8495-951220891185'
-  }
+  // INTRO
+  { id: 'intro-1', provider: 'intro', title: 'Välkommen!', description: 'Hej och varmt välkommen! Vad fantastiskt att du hjälper din församling att komma igång med AI-tolkning. Vår app är helt gratis att använda för er tack vare något som kallas BYOK (Bring Your Own Key). Det betyder helt enkelt att du hämtar dina egna "digitala lösenord" från de tjänster vi använder.', imageUrl: 'https://github.com/user-attachments/assets/b84dfbcf-47a5-4d97-a1bd-5876aae6d4d5' },
+  { id: 'intro-2', provider: 'intro', title: 'Så läser du bilderna', description: 'Internet kan vara rörigt. I den här guiden har vi suddat ut allt du inte behöver bry dig om. Följ den röda linsen: Leta bara efter den röda ringen. Läs i förstoringsglaset: Vi har zoomat in det viktiga åt dig.', imageUrl: 'https://github.com/user-attachments/assets/e5cf2ea5-488f-4d71-9953-7c83fe8ea8c6', overlays: [{ ringX: 50, ringY: 50, magX: 75, magY: 50, zoom: 3, text: 'Klicka Här' }] },
+  { id: 'intro-3', provider: 'intro', title: 'Ditt AI-lösenord', description: 'Del 1: Din AI-Nyckel. Vi börjar med att hämta "hjärnan" i systemet från Google Gemini.', imageUrl: 'https://github.com/user-attachments/assets/fe7070a5-37cd-4625-94a0-48bec8441ace' },
+  // GEMINI
+  { id: 'gemini-1', provider: 'gemini', title: 'Hitta menyn', description: 'Öppna Google AI Studio. Klicka på "Get API key" nere till vänster.', imageUrl: 'https://github.com/user-attachments/assets/3afdd79f-9520-4819-ac91-d5bb86ff1be1', overlays: [{ ringX: 12, ringY: 85, magX: 30, magY: 70, zoom: 3 }] },
+  { id: 'gemini-2', provider: 'gemini', title: 'Skapa knappen', description: 'Klicka på den grå knappen "Create API key" uppe till höger.', imageUrl: 'https://github.com/user-attachments/assets/1c9fd3bd-1e00-4276-b2f4-a47d173dc55d', overlays: [{ ringX: 85, ringY: 15, magX: 65, magY: 30, zoom: 3 }] },
+  { id: 'gemini-3', provider: 'gemini', title: 'Nytt projekt', description: 'Välj "Create project" i rutan som dyker upp.', imageUrl: 'https://github.com/user-attachments/assets/47f3fd65-71d2-4c96-9dc8-76a64c99020c', overlays: [{ ringX: 50, ringY: 50, magX: 75, magY: 50, zoom: 3 }] },
+  { id: 'gemini-4', provider: 'gemini', title: 'Kopiera nyckeln', description: 'Klicka på den lilla ikonen som ser ut som två papper för att kopiera din färdiga nyckel.', imageUrl: 'https://github.com/user-attachments/assets/084aea68-36ce-4847-addb-e2d540b9a020', overlays: [{ ringX: 75, ringY: 45, magX: 50, magY: 70, zoom: 4 }] },
+  { id: 'gemini-5', provider: 'gemini', title: 'Klistra in', description: 'Klistra in nyckeln i appen.', imageUrl: 'https://github.com/user-attachments/assets/a142a8e8-cb96-41a7-9234-e34d51ed8570', overlays: [{ ringX: 50, ringY: 50, magX: 50, magY: 20, zoom: 2 }] },
+  // LIVEKIT
+  { id: 'livekit-1', provider: 'livekit', title: 'LiveKit Logga in', description: 'Logga in med Google.', imageUrl: 'https://github.com/user-attachments/assets/693f1605-bf43-4310-81be-01a471efc433', overlays: [{ ringX: 30, ringY: 50, magX: 60, magY: 50, zoom: 3 }] },
+  { id: 'livekit-2', provider: 'livekit', title: 'LiveKit Fortsätt', description: 'Klicka på "Continue".', imageUrl: 'https://github.com/user-attachments/assets/82be7e28-d63d-4c92-a431-d857acfc1b67', overlays: [{ ringX: 50, ringY: 50, magX: 75, magY: 50, zoom: 3 }] },
+  { id: 'livekit-3', provider: 'livekit', title: 'LiveKit Hoppa över', description: 'Klicka på "Skip for now" längst ner.', imageUrl: 'https://github.com/user-attachments/assets/2c0b248b-5b6b-4136-9de2-a4fbbf650b77', overlays: [{ ringX: 50, ringY: 90, magX: 50, magY: 60, zoom: 3 }] },
+  { id: 'livekit-4', provider: 'livekit', title: 'LiveKit Inställningar', description: 'Gå till Settings och API keys.', imageUrl: 'https://github.com/user-attachments/assets/ba08f099-6e03-4cd9-9e26-b5ae1802966a', overlays: [{ ringX: 10, ringY: 60, magX: 35, magY: 50, zoom: 3 }] },
+  { id: 'livekit-5', provider: 'livekit', title: 'LiveKit Nyckelrad', description: 'Klicka på raden där din nyckel står.', imageUrl: 'https://github.com/user-attachments/assets/af9550c7-0f26-4ff3-b584-096f8ac5993a', overlays: [{ ringX: 50, ringY: 50, magX: 50, magY: 20, zoom: 3 }] },
+  { id: 'livekit-6', provider: 'livekit', title: 'LiveKit Kopiera', description: 'Kopiera både WebSocket URL och API key.', imageUrl: 'https://github.com/user-attachments/assets/d38efc60-e190-4d3c-8c43-90ae8066255e', overlays: [{ ringX: 70, ringY: 50, magX: 40, magY: 50, zoom: 3 }] },
+  // DAILY
+  { id: 'daily-1', provider: 'daily', title: 'Daily Registrering', description: 'Klicka på "Sign up" längst ner.', imageUrl: 'https://github.com/user-attachments/assets/71f62a2f-c1b9-4de8-9163-971a6765d05b', overlays: [{ ringX: 50, ringY: 85, magX: 50, magY: 50, zoom: 4 }] },
+  { id: 'daily-2', provider: 'daily', title: 'Daily Skapa', description: 'Fyll i uppgifter och klicka Sign up.', imageUrl: 'https://github.com/user-attachments/assets/192c893e-901a-470f-ab24-918e1be5e7f4', overlays: [{ ringX: 50, ringY: 75, magX: 50, magY: 45, zoom: 3 }] },
+  { id: 'daily-3', provider: 'daily', title: 'Daily Domän', description: 'Hitta på ett namn.', imageUrl: 'https://github.com/user-attachments/assets/79775d18-6a7d-4900-b797-3670cdd7c721', overlays: [{ ringX: 45, ringY: 40, magX: 75, magY: 50, zoom: 3 }] },
+  { id: 'daily-4', provider: 'daily', title: 'Daily Dashboard', description: 'Klicka på Open dashboard.', imageUrl: 'https://github.com/user-attachments/assets/5fb1b3c6-ed30-476d-bd4c-1f63b788e6f0', overlays: [{ ringX: 40, ringY: 50, magX: 70, magY: 50, zoom: 3 }] },
+  { id: 'daily-5', provider: 'daily', title: 'Daily Betalkort', description: 'Avbryt (Discard) kortuppgifter.', imageUrl: 'https://github.com/user-attachments/assets/a9191a79-ea85-4a40-91b6-fd077276bc4f', overlays: [{ ringX: 55, ringY: 45, magX: 75, magY: 65, zoom: 3 }] },
+  { id: 'daily-6', provider: 'daily', title: 'Daily Developers', description: 'Klicka på Developers.', imageUrl: 'https://github.com/user-attachments/assets/f3938dc1-7ab1-4fb8-b2a2-182c29ed2aaf', overlays: [{ ringX: 10, ringY: 60, magX: 35, magY: 60, zoom: 3 }] },
+  { id: 'daily-7', provider: 'daily', title: 'Daily Kopiera', description: 'Kopiera nyckeln.', imageUrl: 'https://github.com/user-attachments/assets/dd0899c2-a0f2-4c6b-83c7-5d9404a5e88b', overlays: [{ ringX: 90, ringY: 45, magX: 60, magY: 60, zoom: 3 }] },
+  // CLOUDFLARE
+  { id: 'cf-1', provider: 'cloudflare', title: 'Cloudflare Start', description: 'Klicka på Start for free.', imageUrl: 'https://github.com/user-attachments/assets/4788a289-bdec-46ad-a05a-6417b7d8ea0f', overlays: [{ ringX: 30, ringY: 70, magX: 60, magY: 50, zoom: 3 }] },
+  { id: 'cf-2', provider: 'cloudflare', title: 'Cloudflare Konto', description: 'Fyll i Email/Password.', imageUrl: 'https://github.com/user-attachments/assets/d92da951-edb5-44e8-a43a-0aecc1d61423', overlays: [{ ringX: 50, ringY: 40, magX: 75, magY: 40, zoom: 3 }] },
+  { id: 'cf-3', provider: 'cloudflare', title: 'Cloudflare Meny', description: 'Välj Serverless SFU i menyn.', imageUrl: 'https://github.com/user-attachments/assets/468e41f4-8ffd-4b0b-be4e-ad0743de503f', overlays: [{ ringX: 15, ringY: 75, magX: 40, magY: 70, zoom: 3 }] },
+  { id: 'cf-4', provider: 'cloudflare', title: 'Cloudflare Skapa 1', description: 'Klicka på Create.', imageUrl: 'https://github.com/user-attachments/assets/5c9ea6da-b3ea-434f-8ca4-d9527781c2a6', overlays: [{ ringX: 60, ringY: 60, magX: 30, magY: 60, zoom: 3 }] },
+  { id: 'cf-5', provider: 'cloudflare', title: 'Cloudflare Skapa 2', description: 'Döp till kyrka och Create.', imageUrl: 'https://github.com/user-attachments/assets/b7918972-5963-44b0-b2f4-971395e3184a', overlays: [{ ringX: 50, ringY: 50, magX: 25, magY: 50, zoom: 3 }] },
+  { id: 'cf-6', provider: 'cloudflare', title: 'Cloudflare Kopiera', description: 'Kopiera App ID och API Token.', imageUrl: 'https://github.com/user-attachments/assets/177aa3ca-9a51-444e-a754-49d9b6770d7e', overlays: [{ ringX: 70, ringY: 65, magX: 40, magY: 65, zoom: 3 }] },
+  // OUTRO
+  { id: 'outro-1', provider: 'outro', title: 'Redo att tolka!', description: 'Bra jobbat! Nycklarna är hämtade.', imageUrl: 'https://github.com/user-attachments/assets/eb5c7d15-c20e-40e8-8495-951220891185' }
 ];

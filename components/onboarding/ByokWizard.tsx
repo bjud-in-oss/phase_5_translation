@@ -5,72 +5,9 @@ import { createOrganization } from '../../src/services/byokService';
 import { signInAnonymously } from 'firebase/auth';
 import { auth } from '../../firebase';
 import { useAppStore } from '../../stores/useAppStore';
+import MagnifierViewer from '../../src/components/onboarding/MagnifierViewer';
 
 type SfuType = 'livekit' | 'daily' | 'cloudflare' | null;
-
-const MagnifierViewer: React.FC<{ card: OnboardingCard }> = ({ card }) => {
-  return (
-    <div className="relative w-full h-64 bg-slate-800 rounded-lg border border-slate-700 flex items-center justify-center overflow-hidden mb-6">
-      {card.imageUrl ? (
-        <img src={card.imageUrl} alt={card.title} className="w-full h-full object-cover opacity-50" />
-      ) : (
-        <div className="text-slate-500 flex flex-col items-center">
-          <svg className="w-12 h-12 mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
-          <span className="text-sm">Visuell guide för: {card.title}</span>
-        </div>
-      )}
-      
-      {card.overlays && card.overlays.map((overlay, index) => (
-        <React.Fragment key={index}>
-          {/* Ring */}
-          <div 
-            className="absolute border-4 border-red-500 rounded-full"
-            style={{
-              left: `${overlay.ringX}%`,
-              top: `${overlay.ringY}%`,
-              width: '40px',
-              height: '40px',
-              transform: 'translate(-50%, -50%)',
-              boxShadow: '0 0 0 9999px rgba(0,0,0,0.6)'
-            }}
-          />
-          {/* Magnifier */}
-          <div 
-            className="absolute border-2 border-indigo-500 rounded-full bg-indigo-500/20 flex items-center justify-center shadow-[0_0_15px_rgba(99,102,241,0.5)] overflow-hidden"
-            style={{
-              left: `${overlay.magX}%`,
-              top: `${overlay.magY}%`,
-              width: '100px',
-              height: '100px',
-              transform: 'translate(-50%, -50%)'
-            }}
-          >
-            {card.imageUrl && (
-              <img 
-                src={card.imageUrl} 
-                alt="Zoom" 
-                className="absolute max-w-none"
-                style={{
-                  width: `${100 * overlay.zoom}%`,
-                  height: `${100 * overlay.zoom}%`,
-                  left: `${-overlay.ringX * overlay.zoom + 50}%`,
-                  top: `${-overlay.ringY * overlay.zoom + 50}%`,
-                }}
-              />
-            )}
-            {overlay.text && (
-              <div className="absolute bottom-2 bg-indigo-900/90 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap border border-indigo-500 z-10">
-                  {overlay.text}
-              </div>
-            )}
-          </div>
-        </React.Fragment>
-      ))}
-    </div>
-  );
-};
 
 // --- WIZARD COMPONENT ---
 
@@ -99,8 +36,8 @@ const ByokWizard: React.FC = () => {
     
     // Add SFU choice step
     cards.push({
-      id: 'sfu_choice',
-      provider: 'sfu_choice',
+      id: 'sfu-choice',
+      provider: 'sfu-choice',
       title: 'Välj din SFU-leverantör',
       description: 'Välj hur du vill hantera ljudströmningen.',
     });
@@ -321,11 +258,11 @@ const ByokWizard: React.FC = () => {
           <p className="text-sm text-slate-300">{currentCard.description}</p>
         </div>
 
-        {currentCard.provider !== 'sfu_choice' && currentCard.provider !== 'keys' && currentCard.provider !== 'outro' && (
+        {currentCard.provider !== 'sfu-choice' && currentCard.provider !== 'keys' && currentCard.provider !== 'outro' && (
           <MagnifierViewer card={currentCard} />
         )}
 
-        {currentCard.provider === 'sfu_choice' && renderSfuChoice()}
+        {currentCard.provider === 'sfu-choice' && renderSfuChoice()}
         
         {currentCard.provider === 'keys' && renderKeyInputs()}
 
@@ -388,7 +325,7 @@ const ByokWizard: React.FC = () => {
         ) : (
           <button
             onClick={handleNext}
-            disabled={currentCard.provider === 'sfu_choice' && !selectedSfu}
+            disabled={currentCard.provider === 'sfu-choice' && !selectedSfu}
             className="px-6 py-2 rounded-lg text-sm font-bold bg-indigo-600 hover:bg-indigo-500 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-[0_0_15px_rgba(99,102,241,0.3)]"
           >
             Nästa
