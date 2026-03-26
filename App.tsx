@@ -14,6 +14,7 @@ import Tower from './components/Tower';
 import SystemPromptModal from './components/SystemPromptModal'; 
 import PinCodeModal from './components/PinCodeModal';
 import StartPage from './components/StartPage';
+import MagnifierEditor from './src/components/onboarding/MagnifierEditor';
 import { AudioGroup } from './types';
 import { useAppStore, UserRole } from './stores/useAppStore';
 
@@ -590,6 +591,11 @@ const App: React.FC = () => {
         </div>
       </div>
     );
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('mode') === 'editor') {
+    return <MagnifierEditor />;
   }
 
   if (pendingRole) {
